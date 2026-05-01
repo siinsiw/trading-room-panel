@@ -5,6 +5,7 @@ export interface UsersRepository {
   getById(id: ID): Promise<User | null>;
   getByRole(role: Role): Promise<User[]>;
   create(user: User): Promise<User>;
+  createMany(users: User[]): Promise<User[]>;
   update(id: ID, patch: Partial<User>): Promise<User>;
   delete(id: ID): Promise<void>;
 }

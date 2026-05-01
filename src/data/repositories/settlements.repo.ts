@@ -6,5 +6,6 @@ export interface SettlementsRepository {
   getByMarketAndDate(marketId: ID, settlementDate: JalaliDate): Promise<Settlement | null>;
   getLatest(): Promise<Settlement | null>;
   create(settlement: Settlement): Promise<Settlement>;
+  createMany(settlements: Settlement[]): Promise<Settlement[]>;
   update(id: ID, patch: Partial<Settlement>): Promise<Settlement>;
 }

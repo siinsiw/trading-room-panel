@@ -1,8 +1,17 @@
 import type { RouteObject } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { ResponsiveShell } from '@/ui/layouts/ResponsiveShell';
+import { AuthShell } from '@/ui/layouts/AuthShell';
 
 const RoleSelect = lazy(() => import('@/features/role-select/RoleSelect'));
+
+// Auth
+const LoginPage          = lazy(() => import('@/features/auth/LoginPage'));
+const SignupPage         = lazy(() => import('@/features/auth/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('@/features/auth/ForgotPasswordPage'));
+const ResetPasswordPage  = lazy(() => import('@/features/auth/ResetPasswordPage'));
+const VerifyEmailPage    = lazy(() => import('@/features/auth/VerifyEmailPage'));
+const PendingApprovalPage = lazy(() => import('@/features/auth/PendingApprovalPage'));
 
 // Admin
 const AdminDashboard    = lazy(() => import('@/features/admin-dashboard/AdminDashboard'));
@@ -29,6 +38,20 @@ function Wrap({ children }: { children: React.ReactNode }) {
 
 export const routes: RouteObject[] = [
   { path: '/', element: <Wrap><RoleSelect /></Wrap> },
+
+  // Auth routes — wrapped in AuthShell (centered card layout)
+  {
+    element: <AuthShell />,
+    children: [
+      { path: '/auth/login',            element: <Wrap><LoginPage /></Wrap> },
+      { path: '/auth/signup',           element: <Wrap><SignupPage /></Wrap> },
+      { path: '/auth/forgot-password',  element: <Wrap><ForgotPasswordPage /></Wrap> },
+      { path: '/auth/reset-password',   element: <Wrap><ResetPasswordPage /></Wrap> },
+      { path: '/auth/verify-email',     element: <Wrap><VerifyEmailPage /></Wrap> },
+      { path: '/auth/pending-approval', element: <Wrap><PendingApprovalPage /></Wrap> },
+    ],
+  },
+
   {
     element: <ResponsiveShell />,
     children: [

@@ -1,24 +1,13 @@
-import { generateSampleData } from './sample-data';
-import { publishBroadcast } from '@/data/sync/broadcast';
-
-const LS_KEYS = ['tr:markets', 'tr:users', 'tr:orders', 'tr:trades', 'tr:settlements', 'tr:audit'];
+import { supabase } from '@/lib/supabase';
 
 export function resetToSeedData(): void {
-  // Wipe
-  LS_KEYS.forEach(k => localStorage.removeItem(k));
-
-  // Reseed
-  const data = generateSampleData();
-  localStorage.setItem('tr:markets',     JSON.stringify(data.markets));
-  localStorage.setItem('tr:users',       JSON.stringify(data.users));
-  localStorage.setItem('tr:orders',      JSON.stringify(data.orders));
-  localStorage.setItem('tr:trades',      JSON.stringify(data.trades));
-  localStorage.setItem('tr:settlements', JSON.stringify(data.settlements));
-  localStorage.setItem('tr:audit',       JSON.stringify(data.auditEntries));
-
-  publishBroadcast({ type: 'seed.reset' });
+  // In Supabase mode, seed is done via SQL migration (supabase/migrations/0001_init.sql)
+  // This function is a no-op — the seed data is already in the database.
+  console.info('[seed] Supabase mode: seed data managed via SQL migration.');
 }
 
-export function isSeeded(): boolean {
-  return localStorage.getItem('tr:markets') !== null;
+export async function isSeeded(): Promise<boolean> {
+  const { data, error } = await supabase.from('markets').select('id').limit(1);
+  if (error) return false;
+  return (data?.length ?? 0) > 0;
 }

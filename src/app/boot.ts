@@ -4,10 +4,11 @@ import { useOrderbookStore } from '@/stores/orderbook.store';
 import { useTimeStore } from '@/stores/time.store';
 import { logger } from '@/lib/logger';
 
-export function boot(): void {
+export async function boot(): Promise<void> {
   // Seed on first load
-  if (!isSeeded()) {
-    logger.info('Seeding LocalStorage with sample data...');
+  const seeded = await isSeeded();
+  if (!seeded) {
+    logger.info('Seeding data...');
     resetToSeedData();
   }
 
@@ -29,7 +30,6 @@ export function boot(): void {
     useOrderbookStore.getState().invalidate();
   });
 
-  // Cleanup on page unload (optional, mostly for SSR compat)
   window.addEventListener('beforeunload', () => {
     stopClock();
     stopBroadcast();

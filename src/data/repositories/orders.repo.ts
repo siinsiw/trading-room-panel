@@ -6,6 +6,7 @@ export interface OrdersRepository {
   getByTrader(traderId: ID): Promise<Order[]>;
   getByMarketAndDate(marketId: ID, settlementDate: JalaliDate): Promise<Order[]>;
   create(order: Order): Promise<Order>;
+  createMany(orders: Order[]): Promise<Order[]>;
   update(id: ID, patch: Partial<Order>): Promise<Order>;
   updateMany(orders: Order[]): Promise<Order[]>;
   delete(id: ID): Promise<void>;
