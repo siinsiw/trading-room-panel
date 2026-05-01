@@ -1,0 +1,107 @@
+@import './fonts.css';
+@import './theme.css';
+@import 'tailwindcss';
+
+/* ─── Base ─────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  direction: rtl;
+  font-size: 15px;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Vazirmatn', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* ─── Numeric / mono elements ────────────────────── */
+.font-mono,
+[data-numeric],
+.tabular {
+  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Scrollbar ───────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+}
+
+/* ─── Custom cursor (desktop only) ─────────────────── */
+@media (pointer: fine) {
+  * { cursor: none; }
+
+  .cursor-dot {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 9999;
+    width: 10px;
+    height: 10px;
+    background: var(--accent-gold);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    transition: width 150ms ease, height 150ms ease;
+  }
+
+  a:hover ~ .cursor-dot,
+  button:hover ~ .cursor-dot,
+  [role="button"]:hover ~ .cursor-dot {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* ─── Bottom nav glow ──────────────────────────────── */
+.nav-active {
+  position: relative;
+}
+.nav-active::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  background: radial-gradient(circle, var(--accent-gold) 0%, transparent 60%);
+  opacity: 0.4;
+  filter: blur(12px);
+  z-index: -1;
+  border-radius: 50%;
+}
+
+/* ─── Trade flash animation ────────────────────────── */
+@keyframes tradeFlash {
+  0%   { background-color: color-mix(in srgb, var(--accent-gold) 30%, transparent); }
+  100% { background-color: transparent; }
+}
+.trade-flash {
+  animation: tradeFlash 800ms ease-out forwards;
+}
+
+/* ─── RTL icon mirrors ─────────────────────────────── */
+[dir="rtl"] .icon-arrow,
+[dir="rtl"] .icon-chevron {
+  transform: scaleX(-1);
+}
+
+/* ─── Selection ────────────────────────────────────── */
+::selection {
+  background: color-mix(in srgb, var(--accent-gold) 30%, transparent);
+}
