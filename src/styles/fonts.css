@@ -79,6 +79,26 @@
     url('/fonts/woff/YekanBakhFaNum-ExtraBold.woff')   format('woff');
 }
 
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Black.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Black.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 950;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-ExtraBlack.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-ExtraBlack.woff')   format('woff');
+}
+
 /* ─── Geist Mono — numbers, code, prices ──────────────────────────────────── */
 @font-face {
   font-family: 'Geist Mono';
