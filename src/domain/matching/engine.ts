@@ -47,6 +47,10 @@ export function matchOrder(newOrder: Order, book: Order[]): MatchResult {
       quantity: matchQty,
       priceToman: matchPrice,
       settlementDate: newOrder.settlementDate,
+      kind: newOrder.kind,
+      tradeType: 'normal',
+      manual: false,
+      source: 'panel',
       matchedAt: now(),
       settled: false,
     };

@@ -27,7 +27,7 @@ const defaultForm: MarketFormData = {
   name: '',
   symbol: '',
   unit_weight: '100',
-  unit_label: 'Ú¯Ø±Ù…',
+  unit_label: 'گرم',
   lafz_min: '1',
   lafz_max: '999',
   lafz_scale: '1000',
@@ -66,7 +66,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.symbol || !form.mazne_current) {
-      toast.error('ÙÛŒÙ„Ø¯Ù‡Ø§ÛŒ Ø§Ø¬Ø¨Ø§Ø±ÛŒ Ø±Ø§ Ù¾Ø± Ú©Ù†ÛŒØ¯');
+      toast.error('فیلدهای اجباری را پر کنید');
       return;
     }
     setLoading(true);
@@ -85,10 +85,10 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
 
       if (market) {
         await repos.markets.update(market.id, payload);
-        toast.success('Ø¨Ø§Ø²Ø§Ø± Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ø´Ø¯');
+        toast.success('بازار بروزرسانی شد');
       } else {
         await repos.markets.create({ ...payload, id: crypto.randomUUID(), createdAt: new Date().toISOString() });
-        toast.success('Ø¨Ø§Ø²Ø§Ø± Ø¬Ø¯ÛŒØ¯ Ø§Ø¶Ø§ÙÙ‡ Ø´Ø¯');
+        toast.success('بازار جدید اضافه شد');
       }
       onSaved();
       onClose();
@@ -100,14 +100,14 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
   }
 
   const fields: { label: string; key: keyof MarketFormData; type?: string; placeholder?: string }[] = [
-    { label: 'Ù†Ø§Ù… Ø¨Ø§Ø²Ø§Ø±', key: 'name', placeholder: 'Ø·Ù„Ø§ÛŒ Ø¢Ø¨â€ŒØ´Ø¯Ù‡' },
-    { label: 'Ù†Ù…Ø§Ø¯', key: 'symbol', placeholder: 'GOLD' },
-    { label: 'ÙˆØ²Ù† ÙˆØ§Ø­Ø¯', key: 'unit_weight', type: 'number', placeholder: '100' },
-    { label: 'Ø¨Ø±Ú†Ø³Ø¨ ÙˆØ§Ø­Ø¯', key: 'unit_label', placeholder: 'Ú¯Ø±Ù…' },
-    { label: 'Ø­Ø¯Ø§Ù‚Ù„ Ù„ÙØ¸', key: 'lafz_min', type: 'number', placeholder: '1' },
-    { label: 'Ø­Ø¯Ø§Ú©Ø«Ø± Ù„ÙØ¸', key: 'lafz_max', type: 'number', placeholder: '999' },
-    { label: 'Ø¶Ø±ÛŒØ¨ Ù„ÙØ¸ (ØªÙˆÙ…Ø§Ù†)', key: 'lafz_scale', type: 'number', placeholder: '1000' },
-    { label: 'Ù…Ø²Ù†Ù‡ ÙØ¹Ù„ÛŒ', key: 'mazne_current', type: 'number', placeholder: '4500000' },
+    { label: 'نام بازار', key: 'name', placeholder: 'طلای آب‌شده' },
+    { label: 'نماد', key: 'symbol', placeholder: 'GOLD' },
+    { label: 'وزن واحد', key: 'unit_weight', type: 'number', placeholder: '100' },
+    { label: 'برچسب واحد', key: 'unit_label', placeholder: 'گرم' },
+    { label: 'حداقل لفظ', key: 'lafz_min', type: 'number', placeholder: '1' },
+    { label: 'حداکثر لفظ', key: 'lafz_max', type: 'number', placeholder: '999' },
+    { label: 'ضریب لفظ (تومان)', key: 'lafz_scale', type: 'number', placeholder: '1000' },
+    { label: 'مزنه فعلی', key: 'mazne_current', type: 'number', placeholder: '4500000' },
   ];
 
   return (
@@ -123,7 +123,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
         dir="rtl"
       >
         <h3 className="mb-5 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-          {market ? 'ÙˆÛŒØ±Ø§ÛŒØ´ Ø¨Ø§Ø²Ø§Ø±' : 'Ø¨Ø§Ø²Ø§Ø± Ø¬Ø¯ÛŒØ¯'}
+          {market ? 'ویرایش بازار' : 'بازار جدید'}
         </h3>
         <form onSubmit={(e) => void handleSubmit(e)} className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
@@ -155,7 +155,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
               />
             </div>
             <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              {form.active ? 'ÙØ¹Ø§Ù„' : 'ØºÛŒØ±ÙØ¹Ø§Ù„'}
+              {form.active ? 'فعال' : 'غیرفعال'}
             </span>
           </label>
 
@@ -166,7 +166,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
               className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5"
               style={{ color: 'var(--text-secondary)' }}
             >
-              Ø§Ù†ØµØ±Ø§Ù
+              انصراف
             </button>
             <button
               type="submit"
@@ -174,7 +174,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
               className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
               style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
             >
-              {loading ? 'Ø¯Ø± Ø­Ø§Ù„ Ø°Ø®ÛŒØ±Ù‡...' : 'Ø°Ø®ÛŒØ±Ù‡'}
+              {loading ? 'در حال ذخیره...' : 'ذخیره'}
             </button>
           </div>
         </form>
@@ -210,11 +210,11 @@ export default function MarketsManagement() {
 
   async function handleSaveMazne(id: string) {
     const val = parseInt(mazneValue, 10);
-    if (!val || val <= 0) { toast.error('Ù…Ø²Ù†Ù‡ Ù†Ø§Ù…Ø¹ØªØ¨Ø±'); return; }
+    if (!val || val <= 0) { toast.error('مزنه نامعتبر'); return; }
     setSavingMazne(true);
     try {
       await (supabase as any).rpc('update_mazne', { p_market_id: id, p_new_mazne: val });
-      toast.success('Ù…Ø²Ù†Ù‡ Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ø´Ø¯');
+      toast.success('مزنه بروزرسانی شد');
       setMarkets((prev) => prev.map((m) => m.id === id ? { ...m, mazneCurrent: val } : m));
       setEditingMazne(null);
     } catch (err) {
@@ -228,7 +228,7 @@ export default function MarketsManagement() {
     if (!deactivateId) return;
     try {
       await repos.markets.update(deactivateId, { active: false });
-      toast.success('Ø¨Ø§Ø²Ø§Ø± ØºÛŒØ±ÙØ¹Ø§Ù„ Ø´Ø¯');
+      toast.success('بازار غیرفعال شد');
       fetchMarkets();
     } catch (err) {
       toast.error(parseError(err));
@@ -240,7 +240,7 @@ export default function MarketsManagement() {
   return (
     <div className="space-y-5" dir="rtl">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Ù…Ø¯ÛŒØ±ÛŒØª Ø¨Ø§Ø²Ø§Ø±Ù‡Ø§</h1>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>مدیریت بازارها</h1>
         <button
           type="button"
           onClick={() => setShowModal(true)}
@@ -248,7 +248,7 @@ export default function MarketsManagement() {
           style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
         >
           <Plus size={16} />
-          Ø¨Ø§Ø²Ø§Ø± Ø¬Ø¯ÛŒØ¯
+          بازار جدید
         </button>
       </div>
 
@@ -257,7 +257,7 @@ export default function MarketsManagement() {
           {Array.from({ length: 3 }).map((_, i) => <SkeletonCard key={i} lines={3} />)}
         </div>
       ) : markets.length === 0 ? (
-        <EmptyState title="Ø¨Ø§Ø²Ø§Ø±ÛŒ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯" action={{ label: 'Ø§ÙØ²ÙˆØ¯Ù† Ø¨Ø§Ø²Ø§Ø±', onClick: () => setShowModal(true) }} />
+        <EmptyState title="بازاری وجود ندارد" action={{ label: 'افزودن بازار', onClick: () => setShowModal(true) }} />
       ) : (
         <div
           className="overflow-hidden rounded-xl border"
@@ -267,8 +267,8 @@ export default function MarketsManagement() {
             <table className="w-full text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {['Ù†Ø§Ù…', 'Ù†Ù…Ø§Ø¯', 'Ù…Ø²Ù†Ù‡', 'Ø¨Ø§Ø²Ù‡ Ù„ÙØ¸', 'ÙˆØ²Ù†', 'ÙˆØ¶Ø¹ÛŒØª', 'Ø¹Ù…Ù„ÛŒØ§Øª'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-right text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                  {['نام', 'نماد', 'مزنه', 'بازه لفظ', 'وزن', 'وضعیت', 'عملیات'].map((h) => (
+                    <th key={h} className="px-4 py-3 text-xs font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                       {h}
                     </th>
                   ))}
@@ -312,14 +312,14 @@ export default function MarketsManagement() {
                           className="tabular-nums cursor-pointer hover:text-opacity-80"
                           style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
                           onDoubleClick={() => { setEditingMazne(m.id); setMazneValue(String(m.mazneCurrent)); }}
-                          title="Ø¯Ùˆ Ø¨Ø§Ø± Ú©Ù„ÛŒÚ© Ø¨Ø±Ø§ÛŒ ÙˆÛŒØ±Ø§ÛŒØ´"
+                          title="دو بار کلیک برای ویرایش"
                         >
                           {formatTomans(m.mazneCurrent)}
                         </span>
                       )}
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      {toFa(m.lafzMin)}â€“{toFa(m.lafzMax)}
+                      {toFa(m.lafzMin)}–{toFa(m.lafzMax)}
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {toFa(m.unitWeight)} {m.unitLabel}
@@ -333,7 +333,7 @@ export default function MarketsManagement() {
                             : { backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 12%, transparent)', color: 'var(--semantic-danger)' }
                         }
                       >
-                        {m.active ? 'ÙØ¹Ø§Ù„' : 'ØºÛŒØ±ÙØ¹Ø§Ù„'}
+                        {m.active ? 'فعال' : 'غیرفعال'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
@@ -344,7 +344,7 @@ export default function MarketsManagement() {
                           className="rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-white/10"
                           style={{ color: 'var(--accent-gold)' }}
                         >
-                          ÙˆÛŒØ±Ø§ÛŒØ´
+                          ویرایش
                         </button>
                         {m.active && (
                           <button
@@ -353,7 +353,7 @@ export default function MarketsManagement() {
                             className="rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-white/10"
                             style={{ color: 'var(--semantic-danger)' }}
                           >
-                            ØºÛŒØ±ÙØ¹Ø§Ù„
+                            غیرفعال
                           </button>
                         )}
                       </div>
@@ -378,9 +378,9 @@ export default function MarketsManagement() {
         open={!!deactivateId}
         onClose={() => setDeactivateId(null)}
         onConfirm={handleDeactivate}
-        title="ØºÛŒØ±ÙØ¹Ø§Ù„ Ú©Ø±Ø¯Ù† Ø¨Ø§Ø²Ø§Ø±"
-        description="Ø¢ÛŒØ§ Ù…Ø·Ù…Ø¦Ù†ÛŒØ¯ Ú©Ù‡ Ù…ÛŒâ€ŒØ®ÙˆØ§Ù‡ÛŒØ¯ Ø§ÛŒÙ† Ø¨Ø§Ø²Ø§Ø± Ø±Ø§ ØºÛŒØ±ÙØ¹Ø§Ù„ Ú©Ù†ÛŒØ¯ØŸ Ø³ÙØ§Ø±Ø´â€ŒÙ‡Ø§ÛŒ Ø¨Ø§Ø² Ù‡Ù†ÙˆØ² Ø¯Ø± Ø³ÛŒØ³ØªÙ… Ù…ÛŒâ€ŒÙ…Ø§Ù†Ù†Ø¯."
-        confirmLabel="ØºÛŒØ±ÙØ¹Ø§Ù„"
+        title="غیرفعال کردن بازار"
+        description="آیا مطمئنید که می‌خواهید این بازار را غیرفعال کنید؟ سفارش‌های باز هنوز در سیستم می‌مانند."
+        confirmLabel="غیرفعال"
         variant="danger"
       />
     </div>

@@ -46,6 +46,18 @@ body {
   background: var(--text-tertiary);
 }
 
+/* اسکرول مخفی — برای navهای موبایل */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+
+/* ─── Tables ──────────────────────────────────────────
+   مرورگر th را پیش‌فرض center می‌کند که در RTL با td (که start است)
+   هم‌راستا نمی‌شود. این قاعده‌ی سراسری مشکل را برای کل پروژه رفع می‌کند. */
+table th,
+table td {
+  text-align: start;
+}
+
 /* ─── Custom cursor (desktop only) ─────────────────── */
 @media (pointer: fine) {
   * { cursor: none; }

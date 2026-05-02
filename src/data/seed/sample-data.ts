@@ -71,6 +71,7 @@ export function generateSampleData() {
       traderId: trader.id,
       marketId: goldMarket.id,
       side,
+      kind: i < 10 ? 'today' : 'tomorrow',
       lafz,
       priceToman,
       quantity: 1 + Math.floor(Math.random() * 3),
@@ -78,6 +79,7 @@ export function generateSampleData() {
       remaining: 1 + Math.floor(Math.random() * 3),
       settlementDate,
       status: 'open',
+      allOrNothing: false,
       placedAt: new Date(Date.now() - i * 60_000).toISOString(),
     });
   }
@@ -95,6 +97,10 @@ export function generateSampleData() {
     quantity: 1,
     priceToman: MAZNE + (250 + i * 10) * 1000,
     settlementDate: today,
+    kind: 'today',
+    tradeType: 'normal',
+    manual: false,
+    source: 'panel',
     matchedAt: new Date(Date.now() - (i + 1) * 3_600_000).toISOString(),
     settled: false,
   }));

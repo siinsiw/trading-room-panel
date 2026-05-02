@@ -70,7 +70,7 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
     const dep = parseFloat(deposit);
     const pu = parseFloat(perUnit);
     const com = parseInt(commission, 10);
-    if (!dep || dep <= 0) { toast.error('ÙˆØ¯ÛŒØ¹Ù‡ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯'); return; }
+    if (!dep || dep <= 0) { toast.error('ودیعه را وارد کنید'); return; }
     setLoading(true);
     try {
       await (supabase as any).rpc('approve_trader', {
@@ -79,7 +79,7 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
         p_per_unit_deposit: pu,
         p_commission: com,
       });
-      toast.success(`${trader.full_name} ØªØ£ÛŒÛŒØ¯ Ø´Ø¯`);
+      toast.success(`${trader.full_name} تأیید شد`);
       onApproved();
       onClose();
     } catch (err) {
@@ -102,13 +102,13 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
         dir="rtl"
       >
         <h3 className="mb-4 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-          ØªØ£ÛŒÛŒØ¯ ØªØ±ÛŒØ¯Ø± â€” {trader.full_name}
+          تأیید تریدر — {trader.full_name}
         </h3>
         <div className="space-y-3">
           {[
-            { label: 'ÙˆØ¯ÛŒØ¹Ù‡ (USDT)', value: deposit, setter: setDeposit, placeholder: '1000' },
-            { label: 'Ø¨ÛŒØ¹Ø§Ù†Ù‡ Ù‡Ø± ÙˆØ§Ø­Ø¯ (USDT)', value: perUnit, setter: setPerUnit, placeholder: '500' },
-            { label: 'Ú©Ù…ÛŒØ³ÛŒÙˆÙ† Ù‡Ø± ÙˆØ§Ø­Ø¯ (ØªÙˆÙ…Ø§Ù†)', value: commission, setter: setCommission, placeholder: '50000' },
+            { label: 'ودیعه (USDT)', value: deposit, setter: setDeposit, placeholder: '1000' },
+            { label: 'بیعانه هر واحد (USDT)', value: perUnit, setter: setPerUnit, placeholder: '500' },
+            { label: 'کمیسیون هر واحد (تومان)', value: commission, setter: setCommission, placeholder: '50000' },
           ].map((f) => (
             <div key={f.label}>
               <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>{f.label}</label>
@@ -130,7 +130,7 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
             className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5"
             style={{ color: 'var(--text-secondary)' }}
           >
-            Ø§Ù†ØµØ±Ø§Ù
+            انصراف
           </button>
           <button
             type="button"
@@ -139,7 +139,7 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
             className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
             style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
           >
-            {loading ? 'Ø¯Ø± Ø­Ø§Ù„ Ø«Ø¨Øª...' : 'ØªØ£ÛŒÛŒØ¯'}
+            {loading ? 'در حال ثبت...' : 'تأیید'}
           </button>
         </div>
       </div>
@@ -259,12 +259,12 @@ export default function AdminDashboard() {
   async function handleSaveMazne() {
     if (!activeMarket) return;
     const val = parseInt(mazneInput, 10);
-    if (!val || val <= 0) { toast.error('Ù…Ø²Ù†Ù‡ Ù†Ø§Ù…Ø¹ØªØ¨Ø±'); return; }
+    if (!val || val <= 0) { toast.error('مزنه نامعتبر'); return; }
     setSavingMazne(true);
     try {
       await (supabase as any).rpc('update_mazne', { p_market_id: activeMarket.id, p_new_mazne: val });
       setActiveMarket({ ...activeMarket, mazneCurrent: val });
-      toast.success('Ù…Ø²Ù†Ù‡ Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ Ø´Ø¯');
+      toast.success('مزنه بروزرسانی شد');
       setEditingMazne(false);
     } catch (err) {
       toast.error(parseError(err));
@@ -290,7 +290,7 @@ export default function AdminDashboard() {
             className="tabular-nums text-2xl font-bold"
             style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
           >
-            {tick ? toFa(tick.tehranTime) : 'â€”â€”:â€”â€”:â€”â€”'}
+            {tick ? toFa(tick.tehranTime) : '——:——:——'}
           </span>
           <span
             className={cn(
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
             }
           >
             {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
-            {isLocked ? 'Ù‚ÙÙ„ Ø´Ø¯Ù‡' : 'Ø¨Ø§Ø²'}
+            {isLocked ? 'قفل شده' : 'باز'}
           </span>
           {!isLocked && lockCountdown > 0 && (
             <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
@@ -319,7 +319,7 @@ export default function AdminDashboard() {
               >
                 {toFa(lockLabel)}
               </span>
-              {' '}ØªØ§ Ù‚ÙÙ„
+              {' '}تا قفل
             </span>
           )}
         </div>
@@ -387,10 +387,10 @@ export default function AdminDashboard() {
 
       {/* Row 2: KPI Cards */}
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <KpiCard label="ØªØ±ÛŒØ¯Ø±Ù‡Ø§ÛŒ ÙØ¹Ø§Ù„" value={activeTraders} loading={loadingKpis} />
-        <KpiCard label="Ø­Ø¬Ù… Ø§Ù…Ø±ÙˆØ²" value={toFa(todayVolume) + ' ÙˆØ§Ø­Ø¯'} loading={loadingKpis} />
-        <KpiCard label="Ø³ÙØ§Ø±Ø´â€ŒÙ‡Ø§ÛŒ Ø¨Ø§Ø²" value={openOrdersCount} loading={loadingKpis} />
-        <KpiCard label="Ø¯Ø± Ù…Ø­Ø¯ÙˆØ¯Ù‡ Ø®Ø·Ø±" value={dangerZoneCount} highlight={dangerZoneCount > 0} loading={loadingKpis} />
+        <KpiCard label="تریدرهای فعال" value={activeTraders} loading={loadingKpis} />
+        <KpiCard label="حجم امروز" value={toFa(todayVolume) + ' واحد'} loading={loadingKpis} />
+        <KpiCard label="سفارش‌های باز" value={openOrdersCount} loading={loadingKpis} />
+        <KpiCard label="در محدوده خطر" value={dangerZoneCount} highlight={dangerZoneCount > 0} loading={loadingKpis} />
       </div>
 
       {/* Row 3: Order book mini + Risk panel */}
@@ -401,14 +401,14 @@ export default function AdminDashboard() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <p className="border-b px-4 py-2.5 text-xs font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-            Ø¯ÙØªØ± Ø³ÙØ§Ø±Ø´ (top 5)
+            دفتر سفارش (top 5)
           </p>
           <div className="flex">
             {/* Asks */}
             <div className="flex-1 border-l" style={{ borderColor: 'var(--border-subtle)' }}>
-              <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--semantic-sell)' }}>ÙØ±ÙˆØ´</p>
+              <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--semantic-sell)' }}>فروش</p>
               {topAsks.length === 0 ? (
-                <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>Ø®Ø§Ù„ÛŒ</p>
+                <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>خالی</p>
               ) : (
                 topAsks.map((o) => (
                   <div key={o.id} className="flex justify-between px-3 py-1 text-xs">
@@ -422,9 +422,9 @@ export default function AdminDashboard() {
             </div>
             {/* Bids */}
             <div className="flex-1">
-              <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--semantic-buy)' }}>Ø®Ø±ÛŒØ¯</p>
+              <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--semantic-buy)' }}>خرید</p>
               {topBids.length === 0 ? (
-                <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>Ø®Ø§Ù„ÛŒ</p>
+                <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>خالی</p>
               ) : (
                 topBids.map((o) => (
                   <div key={o.id} className="flex justify-between px-3 py-1 text-xs">
@@ -445,11 +445,11 @@ export default function AdminDashboard() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <p className="border-b px-4 py-2.5 text-xs font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-            ØªØ±ÛŒØ¯Ø±Ù‡Ø§ÛŒ Ø¯Ø± Ø±ÛŒØ³Ú©
+            تریدرهای در ریسک
           </p>
           {riskTraders.length === 0 ? (
             <p className="px-4 py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              Ù‡Ù…Ù‡ ØªØ±ÛŒØ¯Ø±Ù‡Ø§ Ø¯Ø± ÙˆØ¶Ø¹ÛŒØª Ø³Ø§Ù„Ù… Ù‡Ø³ØªÙ†Ø¯
+              همه تریدرها در وضعیت سالم هستند
             </p>
           ) : (
             <div className="divide-y" style={{ '--divide-color': 'var(--border-subtle)' } as React.CSSProperties}>
@@ -458,7 +458,7 @@ export default function AdminDashboard() {
                   <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{u.profile.full_name}</span>
                   <div className="flex items-center gap-2">
                     <span className="tabular-nums text-xs" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
-                      {toFa(u.margin.percentage.toFixed(1))}Ùª
+                      {toFa(u.margin.percentage.toFixed(1))}٪
                     </span>
                     <ZoneBadge zone={u.margin.zone} />
                   </div>
@@ -475,10 +475,10 @@ export default function AdminDashboard() {
         style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
       >
         <p className="border-b px-4 py-2.5 text-xs font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-          Ø¢Ø®Ø±ÛŒÙ† Ù…Ø¹Ø§Ù…Ù„Ø§Øª
+          آخرین معاملات
         </p>
         {recentTrades.length === 0 ? (
-          <p className="px-4 py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>Ù…Ø¹Ø§Ù…Ù„Ù‡â€ŒØ§ÛŒ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡</p>
+          <p className="px-4 py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>معامله‌ای ثبت نشده</p>
         ) : (
           <div className="divide-y" style={{ '--divide-color': 'var(--border-subtle)' } as React.CSSProperties}>
             {recentTrades.map((t) => (
@@ -486,7 +486,7 @@ export default function AdminDashboard() {
                 <span className="tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
                   {formatTomans(t.priceToman)}
                 </span>
-                <span style={{ color: 'var(--text-secondary)' }}>{toFa(t.quantity)} ÙˆØ§Ø­Ø¯</span>
+                <span style={{ color: 'var(--text-secondary)' }}>{toFa(t.quantity)} واحد</span>
                 <span style={{ color: 'var(--text-tertiary)' }}>
                   {toFa(new Date(t.matchedAt).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' }))}
                 </span>
@@ -500,7 +500,7 @@ export default function AdminDashboard() {
       {pendingTraders.length > 0 && (
         <div>
           <p className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± ØªØ£ÛŒÛŒØ¯ ({toFa(pendingTraders.length)})
+            در انتظار تأیید ({toFa(pendingTraders.length)})
           </p>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {pendingTraders.map((pt) => (
@@ -530,7 +530,7 @@ export default function AdminDashboard() {
                   </p>
                 )}
                 <p className="mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  Ø«Ø¨Øªâ€ŒÙ†Ø§Ù…: {toFa(new Date(pt.created_at).toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' }))}
+                  ثبت‌نام: {toFa(new Date(pt.created_at).toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' }))}
                 </p>
                 <button
                   type="button"
@@ -538,7 +538,7 @@ export default function AdminDashboard() {
                   className="w-full rounded-lg py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
                   style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
                 >
-                  ØªØ£ÛŒÛŒØ¯
+                  تأیید
                 </button>
               </div>
             ))}

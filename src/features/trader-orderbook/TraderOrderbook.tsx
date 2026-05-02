@@ -22,23 +22,21 @@ interface OrderLevel {
   count: number;
 }
 
-function getTodayJalali(): string {
-  const fmt = new Intl.DateTimeFormat('fa-IR', {
-    timeZone: 'Asia/Tehran',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    calendar: 'persian',
-    numberingSystem: 'latn',
-  });
-  const parts = fmt.formatToParts(new Date());
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
-  return `${get('year')}/${get('month')}/${get('day')}`;
+// تاریخ‌های میلادی برای query (دیتابیس از date میلادی استفاده می‌کند)
+function getTodayGregorian(): string {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
-function getTomorrowJalali(): string {
+function getTomorrowGregorian(): string {
   const d = new Date();
   d.setDate(d.getDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+// تاریخ جلالی برای نمایش
+function gregorianToJalaliDisplay(g: string): string {
+  // g = "YYYY-MM-DD" میلادی
+  const date = new Date(g);
   const fmt = new Intl.DateTimeFormat('fa-IR', {
     timeZone: 'Asia/Tehran',
     year: 'numeric',
@@ -47,7 +45,7 @@ function getTomorrowJalali(): string {
     calendar: 'persian',
     numberingSystem: 'latn',
   });
-  const parts = fmt.formatToParts(d);
+  const parts = fmt.formatToParts(date);
   const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   return `${get('year')}/${get('month')}/${get('day')}`;
 }
@@ -160,10 +158,15 @@ export default function TraderOrderbook() {
       const active = all.filter((m) => m.active);
       setMarkets(active);
       if (active.length > 0) setSelectedMarket(active[0]);
-    }).catch(() => {});
+    }).catch((err) => {
+      toast.error('خطا در بارگذاری بازار: ' + (err?.message ?? 'دوباره تلاش کنید'));
+    });
   }, []);
 
-  const settlementDate = settlementType === 'today' ? getTodayJalali() : getTomorrowJalali();
+  // settlementDate برای query (میلادی، چون ستون date میلادی است)
+  const settlementDate = settlementType === 'today' ? getTodayGregorian() : getTomorrowGregorian();
+  // برای نمایش جلالی
+  const settlementDateDisplay = gregorianToJalaliDisplay(settlementDate);
 
   const fetchOrders = useCallback(async () => {
     if (!selectedMarket) return;
@@ -171,8 +174,8 @@ export default function TraderOrderbook() {
     try {
       const data = await repos.orders.getByMarketAndDate(selectedMarket.id, settlementDate);
       setOrders(data);
-    } catch {
-      // silently fail
+    } catch (err) {
+      toast.error('خطا در بارگذاری سفارش‌ها: ' + ((err as Error)?.message ?? ''));
     } finally {
       setLoadingOrders(false);
     }
@@ -184,7 +187,7 @@ export default function TraderOrderbook() {
       const data = await repos.trades.getByMarketAndDate(selectedMarket.id, settlementDate);
       setRecentTrades(data.slice(-10).reverse());
     } catch {
-      // silently fail
+      // non-critical
     }
   }, [selectedMarket, settlementDate]);
 
@@ -238,6 +241,10 @@ export default function TraderOrderbook() {
     e.preventDefault();
     if (!selectedMarket || !profile) return;
     if (isLockedToday) return;
+    if (profile.role !== 'trader') {
+      toast.error('فقط تریدرهای فعال می‌توانند لفظ دهند');
+      return;
+    }
 
     const qtyNum = parseInt(quantity, 10);
     if (!lafzNum || !qtyNum || qtyNum <= 0) {
@@ -345,7 +352,7 @@ export default function TraderOrderbook() {
           </span>
           <span style={{ color: 'var(--text-secondary)' }}>
             تاریخ تسویه:{' '}
-            <span style={{ color: 'var(--text-primary)' }}>{toFa(settlementDate)}</span>
+            <span style={{ color: 'var(--text-primary)' }}>{toFa(settlementDateDisplay)}</span>
           </span>
         </div>
       )}

@@ -9,6 +9,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
     traderId: nanoid(12),
     marketId: 'GOLD',
     side: 'buy',
+    kind: 'today',
     lafz: 100,
     priceToman: 88_400_000,
     quantity: 1,
@@ -16,6 +17,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
     remaining: 1,
     settlementDate: '1405/02/11',
     status: 'open',
+    allOrNothing: false,
     placedAt: new Date().toISOString(),
     ...overrides,
   };

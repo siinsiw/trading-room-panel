@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
+import { useAuthStore } from '@/stores/auth.store';
 import { parseError } from '@/lib/errors';
 import { cn } from '@/lib/cn';
 
@@ -56,6 +57,7 @@ const strengthConfig: Record<PasswordStrength, { label: string; color: string; w
 };
 
 export default function SignupPage() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -72,7 +74,7 @@ export default function SignupPage() {
   const onSubmit = async (data: FormData) => {
     setServerError('');
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data: result, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -84,11 +86,19 @@ export default function SignupPage() {
         },
       });
 
-      if (error) {
-        setServerError(parseError(error));
+      if (error) { setServerError(parseError(error)); return; }
+
+      // اگه email confirmation خاموشه، کاربر مستقیم لاگین میشه
+      if (result.session) {
+        await useAuthStore.getState().loadProfile(result.session.user.id);
+        const profile = useAuthStore.getState().profile;
+        if (profile?.role === 'admin') navigate('/admin/dashboard');
+        else if (profile?.role === 'accountant') navigate('/accountant/reports');
+        else navigate('/auth/pending-approval');
         return;
       }
 
+      // email confirmation روشنه — پیام تأیید نشون بده
       setSentEmail(data.email);
       setDone(true);
     } catch (err) {

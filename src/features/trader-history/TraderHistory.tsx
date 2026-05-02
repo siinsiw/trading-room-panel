@@ -62,7 +62,7 @@ function buildChartData(trades: Trade[]): ChartDataPoint[] {
 
 function exportToCsv(trades: Trade[], profileId: string) {
   const rows = [
-    ['ØªØ§Ø±ÛŒØ®', 'Ø´Ù†Ø§Ø³Ù‡', 'Ø·Ø±Ù', 'Ø­Ø¬Ù…', 'Ù‚ÛŒÙ…Øª ØªÙˆÙ…Ø§Ù†', 'P&L ØªÙˆÙ…Ø§Ù†', 'Ú©Ù…ÛŒØ³ÛŒÙˆÙ†', 'ØªØ³ÙˆÛŒÙ‡'].join(','),
+    ['تاریخ', 'شناسه', 'طرف', 'حجم', 'قیمت تومان', 'P&L تومان', 'کمیسیون', 'تسویه'].join(','),
     ...trades.map((t) => {
       const isBuyer = t.buyerId === profileId;
       const pnl = isBuyer ? (t.buyerPnLToman ?? '') : (t.sellerPnLToman ?? '');
@@ -70,16 +70,16 @@ function exportToCsv(trades: Trade[], profileId: string) {
       return [
         t.settlementDate,
         t.id,
-        isBuyer ? 'Ø®Ø±ÛŒØ¯Ø§Ø±' : 'ÙØ±ÙˆØ´Ù†Ø¯Ù‡',
+        isBuyer ? 'خریدار' : 'فروشنده',
         t.quantity,
         t.priceToman,
         pnl,
         commission,
-        t.settled ? 'Ø¨Ù„Ù‡' : 'Ø®ÛŒØ±',
+        t.settled ? 'بله' : 'خیر',
       ].join(',');
     }),
   ];
-  const blob = new Blob(['ï»¿' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -127,7 +127,7 @@ export default function TraderHistory() {
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          ØªØ§Ø±ÛŒØ®Ú†Ù‡ Ù…Ø¹Ø§Ù…Ù„Ø§Øª
+          تاریخچه معاملات
         </h1>
         <button
           type="button"
@@ -136,7 +136,7 @@ export default function TraderHistory() {
           style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
         >
           <Download size={14} />
-          Ø®Ø±ÙˆØ¬ÛŒ CSV
+          خروجی CSV
         </button>
       </div>
 
@@ -147,18 +147,18 @@ export default function TraderHistory() {
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-          <KpiCard label="ØªØ¹Ø¯Ø§Ø¯ Ù…Ø¹Ø§Ù…Ù„Ø§Øª" value={toFa(settledTrades.length)} />
-          <KpiCard label="Ø­Ø¬Ù… Ú©Ù„" value={toFa(totalQty) + ' ÙˆØ§Ø­Ø¯'} />
+          <KpiCard label="تعداد معاملات" value={toFa(settledTrades.length)} />
+          <KpiCard label="حجم کل" value={toFa(totalQty) + ' واحد'} />
           <KpiCard
-            label="P&L ØªØ¬Ù…ÛŒØ¹ÛŒ"
+            label="P&L تجمیعی"
             value={formatTomans(Math.abs(totalPnL))}
-            sub={totalPnL >= 0 ? 'Ø³ÙˆØ¯' : 'Ø²ÛŒØ§Ù†'}
+            sub={totalPnL >= 0 ? 'سود' : 'زیان'}
             highlight={totalPnL >= 0}
           />
           <KpiCard
-            label="P&L ØªØªØ±"
+            label="P&L تتر"
             value={formatTether(Math.abs(totalPnLTether))}
-            sub={totalPnLTether >= 0 ? 'Ø³ÙˆØ¯' : 'Ø²ÛŒØ§Ù†'}
+            sub={totalPnLTether >= 0 ? 'سود' : 'زیان'}
             highlight={totalPnLTether >= 0}
           />
         </div>
@@ -171,7 +171,7 @@ export default function TraderHistory() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <p className="mb-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
-            P&L ØªØ¬Ù…ÛŒØ¹ÛŒ
+            P&L تجمیعی
           </p>
           <ResponsiveContainer width="100%" height={200}>
             <AreaChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
@@ -202,7 +202,7 @@ export default function TraderHistory() {
                   color: 'var(--text-primary)',
                   fontSize: 12,
                 }}
-                formatter={(value: unknown) => [formatTomans(Number(value)), 'P&L ØªØ¬Ù…ÛŒØ¹ÛŒ']}
+                formatter={(value: unknown) => [formatTomans(Number(value)), 'P&L تجمیعی']}
               />
               <Area
                 type="monotone"
@@ -232,14 +232,24 @@ export default function TraderHistory() {
             ))}
           </div>
         ) : settledTrades.length === 0 ? (
-          <EmptyState title="Ù…Ø¹Ø§Ù…Ù„Ù‡â€ŒØ§ÛŒ Ø§Ù†Ø¬Ø§Ù… Ù†Ø´Ø¯Ù‡" description="Ù¾Ø³ Ø§Ø² ØªØ³ÙˆÛŒÙ‡ØŒ Ù…Ø¹Ø§Ù…Ù„Ø§Øª Ø§ÛŒÙ†Ø¬Ø§ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯" />
+          <EmptyState title="معامله‌ای انجام نشده" description="پس از تسویه، معاملات اینجا نمایش داده می‌شوند" />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <table className="w-full text-xs" style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 800 }}>
+              <colgroup>
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '8%'  }} />
+                <col style={{ width: '8%'  }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '17%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {['ØªØ§Ø±ÛŒØ®', 'Ø¨Ø§Ø²Ø§Ø±', 'Ù†ÙˆØ¹', 'Ø­Ø¬Ù…', 'Ù‚ÛŒÙ…Øª', 'P&L', 'Ú©Ù…ÛŒØ³ÛŒÙˆÙ†', 'Ø·Ø±Ù Ù…Ù‚Ø§Ø¨Ù„'].map((h) => (
-                    <th key={h} className="px-3 py-2 text-right text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                  {['تاریخ', 'بازار', 'نوع', 'حجم', 'قیمت', 'P&L', 'کمیسیون', 'طرف مقابل'].map((h) => (
+                    <th key={h} className="px-3 py-2 text-xs font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                       {h}
                     </th>
                   ))}
@@ -273,7 +283,7 @@ export default function TraderHistory() {
                             : { backgroundColor: 'color-mix(in srgb, var(--semantic-sell) 12%, transparent)', color: 'var(--semantic-sell)' }
                           }
                         >
-                          {isBuyer ? 'Ø®Ø±ÛŒØ¯' : 'ÙØ±ÙˆØ´'}
+                          {isBuyer ? 'خرید' : 'فروش'}
                         </span>
                       </td>
                       <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>

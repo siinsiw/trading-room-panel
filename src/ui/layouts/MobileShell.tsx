@@ -8,6 +8,8 @@ import {
   User,
   BarChart2,
   FileText,
+  PlusCircle,
+  Lock,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/cn';
@@ -20,10 +22,13 @@ interface NavItem {
 }
 
 const adminNav: NavItem[] = [
-  { label: 'داشبورد',  to: '/admin/dashboard',  icon: <LayoutDashboard size={20} /> },
-  { label: 'بازارها',  to: '/admin/markets',    icon: <TrendingUp size={20} /> },
-  { label: 'کاربران',  to: '/admin/users',      icon: <Users size={20} /> },
-  { label: 'تصفیه',   to: '/admin/settlement', icon: <FileText size={20} /> },
+  { label: 'داشبورد',   to: '/admin/dashboard',     icon: <LayoutDashboard size={20} /> },
+  { label: 'بازارها',   to: '/admin/markets',       icon: <TrendingUp size={20} /> },
+  { label: 'کاربران',   to: '/admin/users',         icon: <Users size={20} /> },
+  { label: 'تصفیه',    to: '/admin/settlement',    icon: <FileText size={20} /> },
+  { label: 'معاملات',   to: '/admin/trades',        icon: <BarChart2 size={20} /> },
+  { label: 'ثبت دستی', to: '/admin/manual-trade',  icon: <PlusCircle size={20} /> },
+  { label: 'پروفایل',  to: '/admin/profile',       icon: <User size={20} /> },
 ];
 
 const accountantNav: NavItem[] = [
@@ -31,6 +36,7 @@ const accountantNav: NavItem[] = [
   { label: 'معاملات',  to: '/accountant/trades',      icon: <TrendingUp size={20} /> },
   { label: 'تصفیه‌ها', to: '/accountant/settlements', icon: <FileText size={20} /> },
   { label: 'کاربران',  to: '/accountant/users',       icon: <Users size={20} /> },
+  { label: 'پروفایل', to: '/accountant/profile',     icon: <User size={20} /> },
 ];
 
 const traderNav: NavItem[] = [
@@ -38,6 +44,7 @@ const traderNav: NavItem[] = [
   { label: 'سفارش‌ها', to: '/trader/orders',    icon: <TrendingUp size={20} /> },
   { label: 'تاریخچه',  to: '/trader/history',   icon: <History size={20} /> },
   { label: 'پروفایل',  to: '/trader/profile',   icon: <User size={20} /> },
+  { label: 'حساب‌من',  to: '/trader/account',   icon: <Lock size={20} /> },
 ];
 
 function navForRole(role: string | null): NavItem[] {
@@ -86,15 +93,16 @@ export function MobileShell() {
         <Outlet />
       </main>
 
-      {/* Bottom navigation */}
+      {/* Bottom navigation — اسکرول افقی برای جا گرفتن همه‌ی آیتم‌های ادمین */}
       <nav
-        className="fixed inset-x-0 bottom-0 flex items-center justify-around border-t"
+        className="fixed inset-x-0 bottom-0 flex items-center overflow-x-auto border-t no-scrollbar"
         style={{
           height: 64,
           backgroundColor: 'var(--bg-elevated)',
           borderColor: 'var(--border-subtle)',
           paddingBottom: 'env(safe-area-inset-bottom)',
           zIndex: 50,
+          justifyContent: nav.length <= 4 ? 'space-around' : 'flex-start',
         }}
       >
         {nav.map((item) => {
@@ -104,7 +112,7 @@ export function MobileShell() {
               key={item.to}
               to={item.to}
               className={cn(
-                'relative flex min-h-[44px] min-w-[44px] flex-col items-center justify-center gap-1',
+                'relative flex min-h-[44px] min-w-[72px] shrink-0 flex-col items-center justify-center gap-1 px-2',
                 isActive ? 'nav-active' : '',
               )}
             >

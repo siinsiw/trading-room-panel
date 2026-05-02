@@ -13,6 +13,9 @@ export const supabase = createClient<Database>(url, key, {
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,
+    // از lock پیش‌فرض supabase-js (Web Locks API) استفاده می‌کنیم.
+    // قبلاً یک override no-op داشتیم که باعث race condition بین onAuthStateChange
+    // و فراخوانی‌های همزمان auth می‌شد.
   },
   realtime: {
     params: { eventsPerSecond: 10 },

@@ -23,8 +23,8 @@ export default function PendingApprovalPage() {
     async (payload) => {
       const newRecord = payload.new as Partial<Profile> | undefined;
       if (newRecord?.active === true) {
-        // Reload profile into store then redirect
-        await useAuthStore.getState().loadProfile();
+        // Reload profile into store then redirect — id را پاس می‌دهیم تا getUser فراخوانی نشود
+        await useAuthStore.getState().loadProfile(profileId ?? undefined);
         navigate('/trader/orderbook', { replace: true });
       }
     },

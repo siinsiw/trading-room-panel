@@ -42,6 +42,7 @@ create table if not exists public.profiles (
   updated_at          timestamptz not null default now()
 );
 
+drop trigger if exists profiles_updated_at on public.profiles;
 create trigger profiles_updated_at before update on public.profiles
   for each row execute function update_updated_at();
 
@@ -61,6 +62,7 @@ create table if not exists public.markets (
   updated_at    timestamptz not null default now()
 );
 
+drop trigger if exists markets_updated_at on public.markets;
 create trigger markets_updated_at before update on public.markets
   for each row execute function update_updated_at();
 
@@ -776,6 +778,13 @@ returns text language sql security definer set search_path = public as $$
 $$;
 
 -- ─── profiles RLS ────────────────────────────────────────────────────────────
+drop policy if exists "profiles: own read"          on public.profiles;
+drop policy if exists "profiles: admin read all"    on public.profiles;
+drop policy if exists "profiles: accountant read all" on public.profiles;
+drop policy if exists "profiles: trader see names"  on public.profiles;
+drop policy if exists "profiles: admin write all"   on public.profiles;
+drop policy if exists "profiles: own update"        on public.profiles;
+
 create policy "profiles: own read"
   on public.profiles for select using (id = auth.uid());
 
@@ -786,10 +795,7 @@ create policy "profiles: accountant read all"
   on public.profiles for select using (public.current_role() = 'accountant');
 
 create policy "profiles: trader see names"
-  on public.profiles for select using (
-    public.current_role() = 'trader'
-    -- traders can see name/phone but not deposits — handled by column-level or app logic
-  );
+  on public.profiles for select using (public.current_role() = 'trader');
 
 create policy "profiles: admin write all"
   on public.profiles for update using (public.current_role() = 'admin');
@@ -798,6 +804,10 @@ create policy "profiles: own update"
   on public.profiles for update using (id = auth.uid());
 
 -- ─── markets RLS ─────────────────────────────────────────────────────────────
+drop policy if exists "markets: all read"    on public.markets;
+drop policy if exists "markets: admin write" on public.markets;
+drop policy if exists "markets: admin update" on public.markets;
+
 create policy "markets: all read"
   on public.markets for select using (true);
 
@@ -808,6 +818,10 @@ create policy "markets: admin update"
   on public.markets for update using (public.current_role() = 'admin');
 
 -- ─── orders RLS ──────────────────────────────────────────────────────────────
+drop policy if exists "orders: all read open"      on public.orders;
+drop policy if exists "orders: trader insert own"  on public.orders;
+drop policy if exists "orders: update via rpc"     on public.orders;
+
 create policy "orders: all read open"
   on public.orders for select using (
     status in ('open', 'partial')
@@ -819,9 +833,13 @@ create policy "orders: trader insert own"
   on public.orders for insert with check (trader_id = auth.uid());
 
 create policy "orders: update via rpc"
-  on public.orders for update using (true); -- controlled by RPC security definer
+  on public.orders for update using (true);
 
 -- ─── trades RLS ──────────────────────────────────────────────────────────────
+drop policy if exists "trades: all read"       on public.trades;
+drop policy if exists "trades: insert via rpc" on public.trades;
+drop policy if exists "trades: update via rpc" on public.trades;
+
 create policy "trades: all read"
   on public.trades for select using (
     buyer_id = auth.uid()
@@ -830,12 +848,16 @@ create policy "trades: all read"
   );
 
 create policy "trades: insert via rpc"
-  on public.trades for insert with check (true); -- RPC security definer
+  on public.trades for insert with check (true);
 
 create policy "trades: update via rpc"
   on public.trades for update using (true);
 
 -- ─── settlements RLS ─────────────────────────────────────────────────────────
+drop policy if exists "settlements: admin accountant read" on public.settlements;
+drop policy if exists "settlements: insert via rpc"        on public.settlements;
+drop policy if exists "settlements: update via rpc"        on public.settlements;
+
 create policy "settlements: admin accountant read"
   on public.settlements for select using (public.current_role() in ('admin', 'accountant'));
 
@@ -846,12 +868,16 @@ create policy "settlements: update via rpc"
   on public.settlements for update using (true);
 
 -- ─── audit_log RLS ───────────────────────────────────────────────────────────
+drop policy if exists "audit: admin accountant read" on public.audit_log;
+
 create policy "audit: admin accountant read"
   on public.audit_log for select using (public.current_role() in ('admin', 'accountant'));
 
--- No direct insert/update/delete (append_audit_log function handles it)
-
 -- ─── notifications RLS ───────────────────────────────────────────────────────
+drop policy if exists "notif: own read"          on public.notifications;
+drop policy if exists "notif: own update"        on public.notifications;
+drop policy if exists "notif: insert via trigger" on public.notifications;
+
 create policy "notif: own read"
   on public.notifications for select using (user_id = auth.uid());
 
@@ -862,6 +888,10 @@ create policy "notif: insert via trigger"
   on public.notifications for insert with check (true);
 
 -- ─── system_settings RLS ─────────────────────────────────────────────────────
+drop policy if exists "settings: all read"    on public.system_settings;
+drop policy if exists "settings: admin write" on public.system_settings;
+drop policy if exists "settings: admin update" on public.system_settings;
+
 create policy "settings: all read"
   on public.system_settings for select using (true);
 
@@ -875,12 +905,24 @@ create policy "settings: admin update"
 --  REALTIME
 -- ═══════════════════════════════════════════════════════════════════════════
 
-alter publication supabase_realtime add table public.orders;
-alter publication supabase_realtime add table public.trades;
-alter publication supabase_realtime add table public.markets;
-alter publication supabase_realtime add table public.profiles;
-alter publication supabase_realtime add table public.settlements;
-alter publication supabase_realtime add table public.notifications;
+do $$ begin
+  alter publication supabase_realtime add table public.orders;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.trades;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.markets;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.profiles;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.settlements;
+exception when duplicate_object then null; end $$;
+do $$ begin
+  alter publication supabase_realtime add table public.notifications;
+exception when duplicate_object then null; end $$;
 
 -- ═══════════════════════════════════════════════════════════════════════════
 --  SEED DATA

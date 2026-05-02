@@ -29,37 +29,26 @@ export default function LoginPage() {
   const onSubmit = async (data: FormData) => {
     setServerError('');
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data: signInData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       });
 
-      if (error) {
-        setServerError(parseError(error));
-        return;
-      }
+      if (error) { setServerError(parseError(error)); return; }
+      if (!signInData.user) { setServerError('ورود ناموفق'); return; }
 
-      await useAuthStore.getState().loadProfile();
+      // پروفایل را خودمان با id کاربر می‌گیریم — onAuthStateChange هم
+      // به‌صورت موازی اجرا می‌شود ولی dedup داخل loadProfile رفع تداخل می‌کند.
+      await useAuthStore.getState().loadProfile(signInData.user.id);
       const profile = useAuthStore.getState().profile;
 
-      if (!profile) {
-        setServerError('خطا در بارگذاری پروفایل. دوباره تلاش کنید.');
-        return;
-      }
+      if (!profile) { setServerError('خطا در بارگذاری پروفایل. دوباره تلاش کنید.'); return; }
 
-      if (profile.role === 'admin') {
-        navigate('/admin/dashboard');
-      } else if (profile.role === 'accountant') {
-        navigate('/accountant/reports');
-      } else if (profile.role === 'trader') {
-        if (!profile.active) {
-          navigate('/auth/pending-approval');
-        } else {
-          navigate('/trader/orderbook');
-        }
-      } else {
-        navigate('/auth/pending-approval');
-      }
+      if (profile.role === 'admin') navigate('/admin/dashboard');
+      else if (profile.role === 'accountant') navigate('/accountant/reports');
+      else if (profile.active) navigate('/trader/orderbook');
+      else navigate('/auth/pending-approval');
+
     } catch (err) {
       setServerError(parseError(err));
     }

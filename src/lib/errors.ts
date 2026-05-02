@@ -19,6 +19,10 @@ const DB_ERRORS: Record<string, string> = {
 export function parseError(err: unknown): string {
   if (!err) return 'خطای ناشناخته رخ داد.';
 
+  // برای دیباگ، در کنسول لاگ کامل می‌گذاریم
+  // eslint-disable-next-line no-console
+  console.error('[parseError]', err);
+
   if (typeof err === 'string') {
     return AUTH_ERRORS[err] ?? err;
   }
@@ -26,19 +30,20 @@ export function parseError(err: unknown): string {
   if (typeof err === 'object' && err !== null) {
     const e = err as Record<string, unknown>;
 
-    // Supabase Auth error
     if (typeof e['message'] === 'string') {
       const msg = e['message'] as string;
       if (AUTH_ERRORS[msg]) return AUTH_ERRORS[msg];
 
-      // DB error code
       const code = (e['code'] as string) ?? '';
       if (DB_ERRORS[code]) return DB_ERRORS[code];
 
-      // Hint from postgres
-      if (typeof e['hint'] === 'string') return e['hint'] as string;
+      // Postgres errors معمولاً message + hint + details دارند
+      const hint    = typeof e['hint']    === 'string' ? e['hint']    as string : '';
+      const details = typeof e['details'] === 'string' ? e['details'] as string : '';
 
-      return msg;
+      // اگر message کلی است (مثل hint) و details جزئیات دارد، با هم نشان بده
+      const parts = [msg, details, hint].filter(Boolean).filter((p, i, a) => a.indexOf(p) === i);
+      return parts.join(' • ');
     }
   }
 

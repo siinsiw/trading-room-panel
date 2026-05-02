@@ -19,8 +19,8 @@ function TradeDrawer({ trade, onClose }: TradeDrawerProps) {
     ['بازار', trade.marketId],
     ['خریدار', trade.buyerId],
     ['فروشنده', trade.sellerId],
-    ['سفارش خرید', trade.buyOrderId],
-    ['سفارش فروش', trade.sellOrderId],
+    ['سفارش خرید', trade.buyOrderId ?? '— (ثبت دستی)'],
+    ['سفارش فروش', trade.sellOrderId ?? '— (ثبت دستی)'],
     ['حجم', toFa(trade.quantity) + ' واحد'],
     ['قیمت', formatTomans(trade.priceToman)],
     ['تاریخ تسویه', toFa(trade.settlementDate)],
@@ -153,11 +153,21 @@ export default function AccountantTrades() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed', minWidth: 800 }}>
+              <colgroup>
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '8%'  }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '16%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '10%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
                   {['تاریخ', 'بازار', 'حجم', 'قیمت', 'P&L خریدار', 'P&L فروشنده', 'تسویه', ''].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-right font-medium" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
+                    <th key={h} className="px-4 py-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>

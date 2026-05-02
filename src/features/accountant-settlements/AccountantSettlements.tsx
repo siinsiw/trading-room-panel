@@ -169,11 +169,21 @@ export default function AccountantSettlements() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed', minWidth: 800 }}>
+              <colgroup>
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '10%' }} />
+                <col style={{ width: '15%' }} />
+                <col style={{ width: '11%' }} />
+                <col style={{ width: '12%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
                   {['تاریخ', 'نرخ تومان', 'نرخ تتر', 'معاملات', 'حجم', 'کمیسیون', 'وضعیت', ''].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-right font-medium" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
+                    <th key={h} className="px-4 py-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>

@@ -14,13 +14,46 @@ export type Database = {
           deposit_tether: number | null;
           per_unit_deposit: number | null;
           commission_per_unit: number | null;
+          member_group_id: string | null;
+          referrer_id: string | null;
+          referral_bonus_pct: number | null;
+          max_open_units: number | null;
           approved_by: string | null;
           approved_at: string | null;
           created_at: string;
           updated_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at' | 'updated_at'>;
+        // فقط id/full_name اجباری‌اند؛ بقیه default در دیتابیس دارند یا nullable.
+        Insert: {
+          id: string;
+          full_name: string;
+          phone?: string;
+          telegram_id?: string | null;
+          role?: 'admin' | 'accountant' | 'trader';
+          active?: boolean;
+          deposit_tether?: number | null;
+          per_unit_deposit?: number | null;
+          commission_per_unit?: number | null;
+          member_group_id?: string | null;
+          referrer_id?: string | null;
+          referral_bonus_pct?: number | null;
+          max_open_units?: number | null;
+          approved_by?: string | null;
+          approved_at?: string | null;
+        };
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+      };
+      member_groups: {
+        Row: {
+          id: string;
+          name: string;
+          commission_per_unit: number;
+          description: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<Database['public']['Tables']['member_groups']['Row'], 'created_at' | 'updated_at'>;
+        Update: Partial<Database['public']['Tables']['member_groups']['Insert']>;
       };
       markets: {
         Row: {
@@ -46,16 +79,21 @@ export type Database = {
           trader_id: string;
           market_id: string;
           side: 'buy' | 'sell';
+          kind: 'today' | 'tomorrow';
           lafz: number;
           price_toman: number;
           quantity: number;
           filled: number;
           remaining: number;
           settlement_date: string;
-          status: 'open' | 'partial' | 'filled' | 'cancelled';
+          status: 'open' | 'partial' | 'filled' | 'cancelled' | 'expired';
+          all_or_nothing: boolean;
           placed_at: string;
+          expires_at: string | null;
+          overridden_at: string | null;
           cancelled_at: string | null;
           cancel_reason: string | null;
+          telegram_msg_id: number | null;
         };
         Insert: Omit<Database['public']['Tables']['orders']['Row'], 'placed_at'>;
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
@@ -66,11 +104,18 @@ export type Database = {
           market_id: string;
           buyer_id: string;
           seller_id: string;
-          buy_order_id: string;
-          sell_order_id: string;
+          buy_order_id: string | null;
+          sell_order_id: string | null;
           quantity: number;
           price_toman: number;
           settlement_date: string;
+          kind: 'today' | 'tomorrow';
+          trade_type: 'normal' | 'rent' | 'blocked';
+          rent_block_value: number | null;
+          note: string | null;
+          manual: boolean;
+          source: string;
+          created_by: string | null;
           matched_at: string;
           settled: boolean;
           settlement_id: string | null;
@@ -213,6 +258,39 @@ export type Database = {
           percentage: number;
           zone: string;
         }[];
+      };
+      create_manual_trade: {
+        Args: {
+          p_market_id: string;
+          p_buyer_id: string;
+          p_seller_id: string;
+          p_quantity: number;
+          p_price_toman: number;
+          p_settlement_date: string;
+          p_kind?: 'today' | 'tomorrow';
+          p_trade_type?: 'normal' | 'rent' | 'blocked';
+          p_rent_block_value?: number | null;
+          p_note?: string | null;
+        };
+        Returns: string; // trade_id
+      };
+      edit_trade: {
+        Args: {
+          p_trade_id: string;
+          p_quantity: number;
+          p_price_toman: number;
+          p_note?: string | null;
+        };
+        Returns: void;
+      };
+      bulk_update_traders: {
+        Args: {
+          p_target_group_id?: string | null;
+          p_per_unit_deposit?: number | null;
+          p_commission_per_unit?: number | null;
+          p_max_open_units?: number | null;
+        };
+        Returns: number;
       };
     };
   };

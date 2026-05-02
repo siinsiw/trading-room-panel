@@ -102,13 +102,29 @@ function OrderTable({ orders, showCancel, onCancel }: OrderTableProps) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-xs" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+      <table
+        className="w-full text-xs"
+        style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 1000 }}
+      >
+        <colgroup>
+          <col style={{ width: '13%' }} />{/* تاریخ */}
+          <col style={{ width: '11%' }} />{/* بازار */}
+          <col style={{ width: '8%'  }} />{/* نوع */}
+          <col style={{ width: '7%'  }} />{/* لفظ */}
+          <col style={{ width: '14%' }} />{/* قیمت */}
+          <col style={{ width: '6%'  }} />{/* حجم */}
+          <col style={{ width: '6%'  }} />{/* fill */}
+          <col style={{ width: '6%'  }} />{/* باقی */}
+          <col style={{ width: '11%' }} />{/* تسویه */}
+          <col style={{ width: '9%'  }} />{/* وضعیت */}
+          <col style={{ width: '9%'  }} />{/* عملیات */}
+        </colgroup>
         <thead>
           <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
             {['تاریخ', 'بازار', 'نوع', 'لفظ', 'قیمت', 'حجم', 'fill', 'باقی', 'تسویه', 'وضعیت', ''].map((h) => (
               <th
                 key={h}
-                className="px-3 py-2 text-right text-xs font-medium"
+                className="px-3 py-2 text-xs font-medium whitespace-nowrap"
                 style={{ color: 'var(--text-tertiary)' }}
               >
                 {h}

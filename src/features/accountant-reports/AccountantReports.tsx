@@ -76,13 +76,13 @@ export default function AccountantReports() {
 
   function exportCsv() {
     const rows = [
-      ['ØªØ§Ø±ÛŒØ®', 'Ø´Ù†Ø§Ø³Ù‡', 'Ø¨Ø§Ø²Ø§Ø±', 'Ø®Ø±ÛŒØ¯Ø§Ø±', 'ÙØ±ÙˆØ´Ù†Ø¯Ù‡', 'Ø­Ø¬Ù…', 'Ù‚ÛŒÙ…Øª', 'Ú©Ù…ÛŒØ³ÛŒÙˆÙ† Ø®Ø±ÛŒØ¯Ø§Ø±', 'Ú©Ù…ÛŒØ³ÛŒÙˆÙ† ÙØ±ÙˆØ´Ù†Ø¯Ù‡', 'ØªØ³ÙˆÛŒÙ‡'].join(','),
+      ['تاریخ', 'شناسه', 'بازار', 'خریدار', 'فروشنده', 'حجم', 'قیمت', 'کمیسیون خریدار', 'کمیسیون فروشنده', 'تسویه'].join(','),
       ...filteredTrades.map((t) => [
         t.settlementDate, t.id, t.marketId, t.buyerId, t.sellerId,
-        t.quantity, t.priceToman, t.buyerCommission ?? '', t.sellerCommission ?? '', t.settled ? 'Ø¨Ù„Ù‡' : 'Ø®ÛŒØ±',
+        t.quantity, t.priceToman, t.buyerCommission ?? '', t.sellerCommission ?? '', t.settled ? 'بله' : 'خیر',
       ].join(',')),
     ];
-    const blob = new Blob(['ï»¿' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -94,7 +94,7 @@ export default function AccountantReports() {
   return (
     <div className="space-y-6" dir="rtl">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>Ú¯Ø²Ø§Ø±Ø´</h1>
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>گزارش</h1>
         <button
           type="button"
           onClick={exportCsv}
@@ -102,15 +102,15 @@ export default function AccountantReports() {
           style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}
         >
           <Download size={14} />
-          Ø®Ø±ÙˆØ¬ÛŒ CSV
+          خروجی CSV
         </button>
       </div>
 
       {/* Date range filter */}
       <div className="flex flex-wrap items-end gap-3">
         {[
-          { label: 'Ø§Ø² ØªØ§Ø±ÛŒØ®', value: dateFrom, set: setDateFrom },
-          { label: 'ØªØ§ ØªØ§Ø±ÛŒØ®', value: dateTo, set: setDateTo },
+          { label: 'از تاریخ', value: dateFrom, set: setDateFrom },
+          { label: 'تا تاریخ', value: dateTo, set: setDateTo },
         ].map((f) => (
           <div key={f.label}>
             <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>{f.label}</label>
@@ -131,17 +131,17 @@ export default function AccountantReports() {
             className="rounded-lg px-3 py-2 text-xs hover:bg-white/5"
             style={{ color: 'var(--text-tertiary)' }}
           >
-            Ù¾Ø§Ú© Ú©Ø±Ø¯Ù†
+            پاک کردن
           </button>
         )}
       </div>
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="Ú©Ù…ÛŒØ³ÛŒÙˆÙ† Ú©Ù„" value={formatTomans(totalCommission)} loading={loading} />
-        <KpiCard label="Ø­Ø¬Ù… Ú©Ù„" value={toFa(totalVolume) + ' ÙˆØ§Ø­Ø¯'} loading={loading} />
-        <KpiCard label="ØªØ±ÛŒØ¯Ø±Ù‡Ø§ÛŒ ÙØ¹Ø§Ù„" value={toFa(activeTraders)} loading={loading} />
-        <KpiCard label="ØªØ¹Ø¯Ø§Ø¯ ØªØµÙÛŒÙ‡" value={toFa(settlements.length)} loading={loading} />
+        <KpiCard label="کمیسیون کل" value={formatTomans(totalCommission)} loading={loading} />
+        <KpiCard label="حجم کل" value={toFa(totalVolume) + ' واحد'} loading={loading} />
+        <KpiCard label="تریدرهای فعال" value={toFa(activeTraders)} loading={loading} />
+        <KpiCard label="تعداد تصفیه" value={toFa(settlements.length)} loading={loading} />
       </div>
 
       {/* Bar chart */}
@@ -150,7 +150,7 @@ export default function AccountantReports() {
           className="rounded-xl border p-4"
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
-          <p className="mb-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>Ø­Ø¬Ù… Ø±ÙˆØ²Ø§Ù†Ù‡</p>
+          <p className="mb-3 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>حجم روزانه</p>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={chartData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border-subtle)" />
@@ -164,7 +164,7 @@ export default function AccountantReports() {
                   color: 'var(--text-primary)',
                   fontSize: 12,
                 }}
-                formatter={(value: unknown) => [toFa(Number(value)) + ' ÙˆØ§Ø­Ø¯', 'Ø­Ø¬Ù…']}
+                formatter={(value: unknown) => [toFa(Number(value)) + ' واحد', 'حجم']}
               />
               <Bar dataKey="volume" fill="var(--accent-gold)" radius={[3, 3, 0, 0]} />
             </BarChart>
@@ -179,14 +179,20 @@ export default function AccountantReports() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <p className="border-b px-4 py-3 text-sm font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)' }}>
-            ØªÙÚ©ÛŒÚ© Ø±ÙˆØ²Ø§Ù†Ù‡
+            تفکیک روزانه
           </p>
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '25%' }} />
+                <col style={{ width: '25%' }} />
+                <col style={{ width: '25%' }} />
+                <col style={{ width: '25%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {['ØªØ§Ø±ÛŒØ®', 'ØªØ¹Ø¯Ø§Ø¯ Ù…Ø¹Ø§Ù…Ù„Ø§Øª', 'Ø­Ø¬Ù…', 'Ú©Ù…ÛŒØ³ÛŒÙˆÙ†'].map((h) => (
-                    <th key={h} className="px-4 py-2.5 text-right font-medium" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
+                  {['تاریخ', 'تعداد معاملات', 'حجم', 'کمیسیون'].map((h) => (
+                    <th key={h} className="px-4 py-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>

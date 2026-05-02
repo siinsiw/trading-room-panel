@@ -130,7 +130,7 @@ export default function TraderProfile() {
     <div className="space-y-6 max-w-2xl" dir="rtl">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>
-          Ù¾Ø±ÙˆÙØ§ÛŒÙ„
+          پروفایل
         </h1>
         <button
           type="button"
@@ -139,7 +139,7 @@ export default function TraderProfile() {
           style={{ borderColor: 'var(--border-subtle)', color: 'var(--semantic-danger)' }}
         >
           <LogOut size={14} />
-          Ø®Ø±ÙˆØ¬
+          خروج
         </button>
       </div>
 
@@ -149,7 +149,7 @@ export default function TraderProfile() {
         style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
       >
         <p className="text-xs font-semibold mb-4" style={{ color: 'var(--text-secondary)' }}>
-          ÙˆØ¶Ø¹ÛŒØª Ù…Ø§Ø±Ø¬ÛŒÙ†
+          وضعیت مارجین
         </p>
         {loadingMargin ? (
           <SkeletonCard lines={3} />
@@ -162,24 +162,24 @@ export default function TraderProfile() {
             />
             <div className="grid flex-1 grid-cols-2 gap-3">
               <StatCard
-                label="ÙˆØ¯ÛŒØ¹Ù‡ Ú©Ù„"
+                label="ودیعه کل"
                 value={formatTether(deposit)}
-                sub="ØªØªØ±"
+                sub="تتر"
               />
               <StatCard
-                label="Ù…Ø§Ø±Ø¬ÛŒÙ† Ù…ÙˆØ¬ÙˆØ¯"
+                label="مارجین موجود"
                 value={formatTether(margin?.available_tether ?? deposit)}
-                sub="ØªØªØ±"
+                sub="تتر"
               />
               <StatCard
-                label="Ù…Ø§Ø±Ø¬ÛŒÙ† Ù…ÙˆØ±Ø¯ Ù†ÛŒØ§Ø²"
+                label="مارجین مورد نیاز"
                 value={formatTether(margin?.required_tether ?? 0)}
-                sub="ØªØªØ±"
+                sub="تتر"
               />
               <StatCard
-                label="P&L Ø´Ù†Ø§ÙˆØ±"
+                label="P&L شناور"
                 value={formatTether(Math.abs(margin?.floating_pnl_tether ?? 0))}
-                sub={(margin?.floating_pnl_tether ?? 0) >= 0 ? 'Ø³ÙˆØ¯' : 'Ø²ÛŒØ§Ù†'}
+                sub={(margin?.floating_pnl_tether ?? 0) >= 0 ? 'سود' : 'زیان'}
               />
             </div>
           </div>
@@ -196,7 +196,7 @@ export default function TraderProfile() {
           style={{ borderColor: 'var(--border-subtle)' }}
         >
           <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            Ù¾ÙˆØ²ÛŒØ´Ù†â€ŒÙ‡Ø§ÛŒ Ø¨Ø§Ø²
+            پوزیشن‌های باز
           </p>
         </div>
         {loadingPositions ? (
@@ -204,14 +204,21 @@ export default function TraderProfile() {
             <SkeletonCard lines={3} />
           </div>
         ) : positions.length === 0 ? (
-          <EmptyState title="Ù¾ÙˆØ²ÛŒØ´Ù† Ø¨Ø§Ø²ÛŒ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯" description="Ù…Ø¹Ø§Ù…Ù„Ø§Øª ØªØ³ÙˆÛŒÙ‡â€ŒÙ†Ø´Ø¯Ù‡ Ø§ÛŒÙ†Ø¬Ø§ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯" />
+          <EmptyState title="پوزیشن بازی وجود ندارد" description="معاملات تسویه‌نشده اینجا نمایش داده می‌شوند" />
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs" style={{ tableLayout: 'fixed' }}>
+              <colgroup>
+                <col style={{ width: '20%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '14%' }} />
+                <col style={{ width: '26%' }} />
+                <col style={{ width: '26%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {['Ø¨Ø§Ø²Ø§Ø±', 'Ù†ÙˆØ¹', 'Ø­Ø¬Ù…', 'Ù‚ÛŒÙ…Øª', 'ØªØ§Ø±ÛŒØ® ØªØ³ÙˆÛŒÙ‡'].map((h) => (
-                    <th key={h} className="px-3 py-2 text-right font-medium" style={{ color: 'var(--text-tertiary)' }}>
+                  {['بازار', 'نوع', 'حجم', 'قیمت', 'تاریخ تسویه'].map((h) => (
+                    <th key={h} className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                       {h}
                     </th>
                   ))}
@@ -235,7 +242,7 @@ export default function TraderProfile() {
                             : { backgroundColor: 'color-mix(in srgb, var(--semantic-sell) 12%, transparent)', color: 'var(--semantic-sell)' }
                           }
                         >
-                          {isBuyer ? 'Ø®Ø±ÛŒØ¯' : 'ÙØ±ÙˆØ´'}
+                          {isBuyer ? 'خرید' : 'فروش'}
                         </span>
                       </td>
                       <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>{toFa(t.quantity)}</td>
@@ -257,12 +264,12 @@ export default function TraderProfile() {
         className="rounded-xl border p-5"
         style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
       >
-        <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ù¾Ø±ÙˆÙØ§ÛŒÙ„</p>
-        <InfoRow label="Ù†Ø§Ù… Ú©Ø§Ù…Ù„" value={profile.full_name} />
-        <InfoRow label="Ø´Ù…Ø§Ø±Ù‡ Ù…ÙˆØ¨Ø§ÛŒÙ„" value={toFa(profile.phone)} />
-        <InfoRow label="Ù†Ù‚Ø´" value={profile.role === 'trader' ? 'ØªØ±ÛŒØ¯Ø±' : profile.role === 'admin' ? 'Ø§Ø¯Ù…ÛŒÙ†' : 'Ø­Ø³Ø§Ø¨Ø¯Ø§Ø±'} />
+        <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>اطلاعات پروفایل</p>
+        <InfoRow label="نام کامل" value={profile.full_name} />
+        <InfoRow label="شماره موبایل" value={toFa(profile.phone)} />
+        <InfoRow label="نقش" value={profile.role === 'trader' ? 'تریدر' : profile.role === 'admin' ? 'ادمین' : 'حسابدار'} />
         {profile.telegram_id && (
-          <InfoRow label="ØªÙ„Ú¯Ø±Ø§Ù…" value={'@' + profile.telegram_id} />
+          <InfoRow label="تلگرام" value={'@' + profile.telegram_id} />
         )}
       </div>
 
@@ -271,10 +278,10 @@ export default function TraderProfile() {
         className="rounded-xl border p-5"
         style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
       >
-        <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>ØªÙ†Ø¸ÛŒÙ…Ø§Øª Ø­Ø³Ø§Ø¨</p>
-        <InfoRow label="ÙˆØ¯ÛŒØ¹Ù‡" value={formatTether(deposit)} />
-        <InfoRow label="Ø¨ÛŒØ¹Ø§Ù†Ù‡ Ù‡Ø± ÙˆØ§Ø­Ø¯" value={formatTether(perUnit)} />
-        <InfoRow label="Ú©Ù…ÛŒØ³ÛŒÙˆÙ† Ù‡Ø± ÙˆØ§Ø­Ø¯" value={formatTomans(commission)} />
+        <p className="text-sm font-semibold mb-3" style={{ color: 'var(--text-primary)' }}>تنظیمات حساب</p>
+        <InfoRow label="ودیعه" value={formatTether(deposit)} />
+        <InfoRow label="بیعانه هر واحد" value={formatTether(perUnit)} />
+        <InfoRow label="کمیسیون هر واحد" value={formatTomans(commission)} />
       </div>
     </div>
   );

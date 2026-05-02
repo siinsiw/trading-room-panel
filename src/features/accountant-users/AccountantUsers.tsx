@@ -83,11 +83,19 @@ export default function AccountantUsers() {
           style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
+            <table className="w-full text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0, tableLayout: 'fixed', minWidth: 720 }}>
+              <colgroup>
+                <col style={{ width: '22%' }} />
+                <col style={{ width: '17%' }} />
+                <col style={{ width: '12%' }} />
+                <col style={{ width: '13%' }} />
+                <col style={{ width: '18%' }} />
+                <col style={{ width: '18%' }} />
+              </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
                   {['نام', 'موبایل', 'نقش', 'وضعیت', 'ودیعه', 'تاریخ ثبت'].map((h) => (
-                    <th key={h} className="px-4 py-3 text-right text-xs font-medium" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
+                    <th key={h} className="px-4 py-3 text-xs font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>

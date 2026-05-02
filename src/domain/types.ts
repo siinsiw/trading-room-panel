@@ -31,52 +31,89 @@ export interface User {
   telegramId?: string;
   role: Role;
   // Trader-specific (undefined for admin/accountant):
-  depositTether?: Tether;       // current balance in USDT
-  perUnitDeposit?: Tether;      // required margin per open unit
+  depositTether?: Tether;       // current balance in USDT (ودیعه)
+  perUnitDeposit?: Tether;      // required margin per open unit (بیعانه)
   commissionPerUnit?: Toman;    // flat commission per unit traded
+  memberGroupId?: ID;           // گروه کاربری برای کمیسیون پلکانی
+  referrerId?: ID;              // معرف
+  referralBonusPct?: number;    // درصد پاداش از کمیسیون زیرمجموعه
+  maxOpenUnits?: number;        // سقف موقعیت باز (null = بدون محدودیت)
   active: boolean;
   createdAt: IsoDateTime;
 }
 
-// ─── Order ────────────────────────────────────────────────────────────────────
+// ─── Order (لفظ) ─────────────────────────────────────────────────────────────
+// در دامنه‌ی واقعی، یک Order همان «لفظ» تلگرامی است:
+//   - side: خرید (خ) یا فروش (ف)
+//   - kind: امروزی (today) یا فردایی (tomorrow) — معادل «خ/ف» vs «خف/فف»
+//   - allOrNothing: لفظ یک‌جا (پارشال‌فیل ممنوع)
+//   - expiresAt: TTL یک‌دقیقه‌ای (default از system_settings.lafz_ttl_seconds)
+//   - overriddenAt: اگر مالک با «ب روی برکت» تأیید کرده باشد، تنظیم می‌شود
 export type OrderSide = 'buy' | 'sell';
-export type OrderStatus = 'open' | 'partial' | 'filled' | 'cancelled';
+export type OrderStatus = 'open' | 'partial' | 'filled' | 'cancelled' | 'expired';
+export type LafzKind = 'today' | 'tomorrow';
 
 export interface Order {
   id: ID;
   traderId: ID;
   marketId: ID;
   side: OrderSide;
-  lafz: number;                   // the integer the trader wrote
+  kind: LafzKind;
+  lafz: number;                   // the integer the trader wrote (می‌تواند منفی باشد)
   priceToman: Toman;              // computed: mazne + lafz * lafzScale
   quantity: number;               // units requested
   filled: number;                 // units already matched
   remaining: number;              // quantity - filled
   settlementDate: JalaliDate;     // which day's settlement
   status: OrderStatus;
+  allOrNothing: boolean;          // لفظ «یک‌جا» — نباید پارشال‌فیل شود
   placedAt: IsoDateTime;
+  expiresAt?: IsoDateTime;        // TTL یک دقیقه‌ای
+  overriddenAt?: IsoDateTime;     // مالک «ب» روی برکت زده تا overrides TTL
   cancelledAt?: IsoDateTime;
-  cancelReason?: string;
+  cancelReason?: string;          // 'user_n' (لغو با ن) | 'auto_expired' | 'auto_cancel_settlement' | …
+  telegramMsgId?: number;
 }
 
 // ─── Trade ────────────────────────────────────────────────────────────────────
+// نوع معامله: عادی، اجاره، بلوکه — اجاره/بلوکه عدد توافقی اضافه دارد.
+export type TradeType = 'normal' | 'rent' | 'blocked';
+
 export interface Trade {
   id: ID;
   marketId: ID;
   buyerId: ID;
   sellerId: ID;
-  buyOrderId: ID;
-  sellOrderId: ID;
+  buyOrderId?: ID;                // null برای ثبت دستی
+  sellOrderId?: ID;
   quantity: number;
   priceToman: Toman;              // matched price — best for buyer (lowest)
   settlementDate: JalaliDate;
+  kind: LafzKind;                 // today / tomorrow
+  tradeType: TradeType;           // normal / rent / blocked
+  rentBlockValue?: Toman;         // عدد توافقی برای rent/blocked
+  note?: string;                  // مثلاً «بدون پری»
+  manual: boolean;                // ثبت دستی؟
+  source: 'bot' | 'panel' | 'today_tomorrow_group';
+  createdBy?: ID;                 // ادمین/حسابداری که ثبت کرد
   matchedAt: IsoDateTime;
   // Filled at settlement time:
   settled: boolean;
+  settlementId?: ID;
   buyerPnLToman?: Toman;
   sellerPnLToman?: Toman;
   buyerCommission?: Toman;
   sellerCommission?: Toman;
+}
+
+// ─── Member Group (گروه‌بندی برای کمیسیون پلکانی) ───────────────────────────
+export interface MemberGroup {
+  id: ID;
+  name: string;
+  commissionPerUnit: Toman;       // کمیسیون پایه‌ی گروه
+  description?: string;
+  createdAt: IsoDateTime;
+  updatedAt: IsoDateTime;
 }
 
 // ─── Settlement ───────────────────────────────────────────────────────────────
