@@ -24,7 +24,7 @@ export default function App() {
         closeButton
         toastOptions={{
           style: {
-            fontFamily: 'Vazirmatn, system-ui, sans-serif',
+            fontFamily: 'YekanBakh, Vazirmatn, system-ui, sans-serif',
             backgroundColor: 'var(--bg-elevated)',
             borderColor: 'var(--border-strong)',
             color: 'var(--text-primary)',

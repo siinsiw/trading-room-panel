@@ -1,34 +1,85 @@
-/* Vazirmatn — Persian UI font (self-hosted) */
+/* ─── YekanBakh FaNum — Persian UI font (self-hosted) ──────────────────────── */
 @font-face {
-  font-family: 'Vazirmatn';
-  src: url('/fonts/Vazirmatn-Regular.woff2') format('woff2');
-  font-weight: 400;
+  font-family: 'YekanBakh';
   font-style: normal;
+  font-weight: 100;
   font-display: swap;
-}
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/fonts/Vazirmatn-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/fonts/Vazirmatn-Bold.woff2') format('woff2');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Vazirmatn';
-  src: url('/fonts/Vazirmatn-ExtraBold.woff2') format('woff2');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Thin.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Thin.woff')   format('woff');
 }
 
-/* Geist Mono — numbers, code, prices */
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 200;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Thin.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Thin.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Light.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Light.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Regular.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Regular.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Regular.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Regular.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-SemiBold.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-SemiBold.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-Bold.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-Bold.woff')   format('woff');
+}
+
+@font-face {
+  font-family: 'YekanBakh';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src:
+    url('/fonts/woff2/YekanBakhFaNum-ExtraBold.woff2') format('woff2'),
+    url('/fonts/woff/YekanBakhFaNum-ExtraBold.woff')   format('woff');
+}
+
+/* ─── Geist Mono — numbers, code, prices ──────────────────────────────────── */
 @font-face {
   font-family: 'Geist Mono';
   src: url('/fonts/GeistMono-Regular.woff2') format('woff2');
