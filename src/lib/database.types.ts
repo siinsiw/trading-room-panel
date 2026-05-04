@@ -69,6 +69,13 @@ export type Database = {
           active: boolean;
           created_at: string;
           updated_at: string;
+          // migration 0005
+          mode: 'parry' | 'margin';
+          parry_threshold: number | null;
+          margin_warn_pct: number;
+          margin_liquidate_pct: number;
+          tether_rate_today: number | null;
+          tether_rate_tomorrow: number | null;
         };
         Insert: Omit<Database['public']['Tables']['markets']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['markets']['Insert']>;
@@ -82,6 +89,7 @@ export type Database = {
           kind: 'today' | 'tomorrow';
           lafz: number;
           price_toman: number;
+          price_kind: 'relative' | 'absolute';
           quantity: number;
           filled: number;
           remaining: number;
@@ -91,6 +99,8 @@ export type Database = {
           placed_at: string;
           expires_at: string | null;
           overridden_at: string | null;
+          override_count: number;
+          is_porat: boolean;
           cancelled_at: string | null;
           cancel_reason: string | null;
           telegram_msg_id: number | null;
@@ -210,7 +220,7 @@ export type Database = {
           available_tether: number;
           floating_pnl_tether: number;
           percentage: number;
-          zone: 'safe' | 'warn' | 'risk' | 'call';
+          zone: 'safe' | 'warn' | 'call';
         };
       };
       apply_settlement: {

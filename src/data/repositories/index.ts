@@ -27,6 +27,11 @@ export const repos = {
         unit_weight: m.unitWeight, unit_label: m.unitLabel,
         lafz_min: m.lafzMin, lafz_max: m.lafzMax, lafz_scale: m.lafzScale,
         mazne_current: m.mazneCurrent, active: m.active,
+        // migration 0005 — mode + thresholds
+        mode: m.mode ?? 'margin',
+        parry_threshold: m.parryThreshold ?? null,
+        margin_warn_pct: m.marginWarnPct ?? 75,
+        margin_liquidate_pct: m.marginLiquidatePct ?? 85,
       } as Parameters<typeof marketsRepo.create>[0]);
       return dbToMarket(d);
     },
@@ -41,6 +46,10 @@ export const repos = {
         ...(patch.lafzScale     !== undefined && { lafz_scale:   patch.lafzScale }),
         ...(patch.mazneCurrent  !== undefined && { mazne_current: patch.mazneCurrent }),
         ...(patch.active        !== undefined && { active:       patch.active }),
+        ...(patch.mode               !== undefined && { mode:                 patch.mode }),
+        ...(patch.parryThreshold     !== undefined && { parry_threshold:      patch.parryThreshold ?? null }),
+        ...(patch.marginWarnPct      !== undefined && { margin_warn_pct:      patch.marginWarnPct }),
+        ...(patch.marginLiquidatePct !== undefined && { margin_liquidate_pct: patch.marginLiquidatePct }),
       });
       return dbToMarket(d);
     },

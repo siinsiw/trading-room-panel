@@ -8,6 +8,15 @@ import type {
 import type { Market, Order, Trade, Settlement } from '@/domain/types';
 
 export function dbToMarket(d: DBMarket): Market {
+  // Migration 0005 added these columns; older rows may not have them yet, so default safely.
+  const dx = d as DBMarket & {
+    mode?: 'parry' | 'margin';
+    parry_threshold?: number | null;
+    margin_warn_pct?: number | null;
+    margin_liquidate_pct?: number | null;
+    tether_rate_today?: number | null;
+    tether_rate_tomorrow?: number | null;
+  };
   return {
     id: d.id,
     name: d.name,
@@ -20,6 +29,12 @@ export function dbToMarket(d: DBMarket): Market {
     mazneCurrent: Number(d.mazne_current),
     active: d.active,
     createdAt: d.created_at,
+    mode: dx.mode ?? 'margin',
+    parryThreshold: dx.parry_threshold == null ? undefined : Number(dx.parry_threshold),
+    marginWarnPct: dx.margin_warn_pct ?? 75,
+    marginLiquidatePct: dx.margin_liquidate_pct ?? 85,
+    tetherRateToday: dx.tether_rate_today == null ? undefined : Number(dx.tether_rate_today),
+    tetherRateTomorrow: dx.tether_rate_tomorrow == null ? undefined : Number(dx.tether_rate_tomorrow),
   };
 }
 
@@ -34,6 +49,7 @@ export function dbToOrder(d: DBOrder): Order {
     side: d.side,
     kind: d.kind,
     lafz: d.lafz,
+    priceKind: (d as DBOrder & { price_kind?: 'relative' | 'absolute' }).price_kind ?? 'relative',
     priceToman: Number(d.price_toman),
     quantity: d.quantity,
     filled: d.filled,

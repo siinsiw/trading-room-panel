@@ -21,6 +21,11 @@ interface MarketFormData {
   lafz_scale: string;
   mazne_current: string;
   active: boolean;
+  // Migration 0005 — مدل عملیاتی + آستانه‌ها
+  mode: 'parry' | 'margin';
+  parry_threshold: string;
+  margin_warn_pct: string;
+  margin_liquidate_pct: string;
 }
 
 const defaultForm: MarketFormData = {
@@ -28,11 +33,15 @@ const defaultForm: MarketFormData = {
   symbol: '',
   unit_weight: '100',
   unit_label: 'گرم',
-  lafz_min: '1',
+  lafz_min: '-999',
   lafz_max: '999',
   lafz_scale: '1000',
   mazne_current: '',
   active: true,
+  mode: 'margin',
+  parry_threshold: '5000',
+  margin_warn_pct: '75',
+  margin_liquidate_pct: '85',
 };
 
 interface MarketModalProps {
@@ -54,6 +63,10 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
           lafz_scale: String(market.lafzScale),
           mazne_current: String(market.mazneCurrent),
           active: market.active,
+          mode: market.mode ?? 'margin',
+          parry_threshold: String(market.parryThreshold ?? 5000),
+          margin_warn_pct: String(market.marginWarnPct ?? 75),
+          margin_liquidate_pct: String(market.marginLiquidatePct ?? 85),
         }
       : defaultForm,
   );
@@ -71,6 +84,13 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
     }
     setLoading(true);
     try {
+      const warnPct = parseInt(form.margin_warn_pct, 10);
+      const liqPct = parseInt(form.margin_liquidate_pct, 10);
+      if (form.mode === 'margin' && warnPct >= liqPct) {
+        toast.error('آستانهٔ هشدار باید کوچکتر از آستانهٔ حراج باشد');
+        return;
+      }
+
       const payload = {
         name: form.name,
         symbol: form.symbol.toUpperCase(),
@@ -81,6 +101,10 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
         lafzScale: parseInt(form.lafz_scale, 10),
         mazneCurrent: parseInt(form.mazne_current, 10),
         active: form.active,
+        mode: form.mode,
+        parryThreshold: form.mode === 'parry' ? parseInt(form.parry_threshold, 10) : undefined,
+        marginWarnPct: warnPct,
+        marginLiquidatePct: liqPct,
       };
 
       if (market) {
@@ -140,6 +164,81 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                 />
               </div>
             ))}
+          </div>
+
+          {/* ─── مدل عملیاتی اتاق ───────────────────────────── */}
+          <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+            <p className="mb-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              مدل عملیاتی اتاق
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['margin', 'parry'] as const).map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setField('mode', m)}
+                  className="rounded-lg border py-2 text-xs font-medium transition-colors"
+                  style={
+                    form.mode === m
+                      ? { borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', backgroundColor: 'color-mix(in srgb, var(--accent-gold) 10%, transparent)' }
+                      : { borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }
+                  }
+                >
+                  {m === 'margin' ? '🔁 مارجین (شناور)' : '🛑 پری (Circuit Breaker)'}
+                </button>
+              ))}
+            </div>
+
+            {form.mode === 'parry' ? (
+              <div className="mt-3">
+                <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  آستانهٔ پری (تومان)
+                </label>
+                <input
+                  type="number"
+                  value={form.parry_threshold}
+                  onChange={(e) => setField('parry_threshold', e.target.value)}
+                  placeholder="5000"
+                  className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                />
+                <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  اگر قیمت ±این مقدار از تصفیه برود، تصفیهٔ فوری زده می‌شود.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <div>
+                  <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    هشدار شارژ (٪)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.margin_warn_pct}
+                    onChange={(e) => setField('margin_warn_pct', e.target.value)}
+                    placeholder="75"
+                    className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                  />
+                </div>
+                <div>
+                  <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>
+                    حراج خودکار (٪)
+                  </label>
+                  <input
+                    type="number"
+                    value={form.margin_liquidate_pct}
+                    onChange={(e) => setField('margin_liquidate_pct', e.target.value)}
+                    placeholder="85"
+                    className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                  />
+                </div>
+                <p className="col-span-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                  وقتی ضرر کاربر به آستانهٔ حراج برسد، بات معامله را به‌اجبار می‌بندد.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Active toggle */}
@@ -267,7 +366,7 @@ export default function MarketsManagement() {
             <table className="w-full text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {['نام', 'نماد', 'مزنه', 'بازه لفظ', 'وزن', 'وضعیت', 'عملیات'].map((h) => (
+                  {['نام', 'نماد', 'مزنه', 'مدل', 'بازه لفظ', 'وزن', 'وضعیت', 'عملیات'].map((h) => (
                     <th key={h} className="px-4 py-3 text-xs font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                       {h}
                     </th>
@@ -315,6 +414,17 @@ export default function MarketsManagement() {
                           title="دو بار کلیک برای ویرایش"
                         >
                           {formatTomans(m.mazneCurrent)}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-xs">
+                      {m.mode === 'parry' ? (
+                        <span style={{ color: 'var(--semantic-warn)' }}>
+                          🛑 پری {m.parryThreshold ? `(${formatTomans(m.parryThreshold)})` : ''}
+                        </span>
+                      ) : (
+                        <span style={{ color: 'var(--semantic-success)' }}>
+                          🔁 مارجین ({toFa(m.marginWarnPct ?? 75)}/{toFa(m.marginLiquidatePct ?? 85)})
                         </span>
                       )}
                     </td>

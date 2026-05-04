@@ -1,10 +1,19 @@
 import type { User, Trade, MarginResult, Toman } from '../types';
 
+/**
+ * مدل دو-آستانه‌ای (مهدی، 2026-05-03):
+ *   lossPercentage = درصد ضرر نسبت به ودیعهٔ مورد نیاز (0-100)
+ *   safe → loss < warnPct
+ *   warn → warnPct ≤ loss < liqPct
+ *   call → loss ≥ liqPct  (حراج خودکار)
+ */
 export function computeMargin(
   trader: User,
   openTrades: Trade[],
   currentPrice: Toman,
   currentTetherRate: Toman,
+  warnPct = 75,
+  liqPct = 85,
 ): MarginResult {
   const openUnits = openTrades.reduce((s, t) => {
     if (t.buyerId === trader.id || t.sellerId === trader.id) return s + t.quantity;
@@ -27,15 +36,15 @@ export function computeMargin(
 
   const availableTether = (trader.depositTether ?? 0) + floatingPnLTether;
 
-  const percentage = requiredTether === 0
-    ? 100
-    : (availableTether / requiredTether) * 100;
+  // درصد ضرر = چقدر از ودیعه مورد نیاز در ضرر است
+  const lossPercentage = requiredTether === 0
+    ? 0
+    : Math.max(0, ((requiredTether - availableTether) / requiredTether) * 100);
 
   const zone: MarginResult['zone'] =
-    percentage >= 85 ? 'safe'
-    : percentage >= 70 ? 'warn'
-    : percentage >= 50 ? 'risk'
-    : 'call';
+    lossPercentage >= liqPct ? 'call'
+    : lossPercentage >= warnPct ? 'warn'
+    : 'safe';
 
-  return { requiredTether, availableTether, floatingPnLTether, percentage, zone };
+  return { requiredTether, availableTether, floatingPnLTether, lossPercentage, zone };
 }

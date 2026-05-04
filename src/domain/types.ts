@@ -21,6 +21,13 @@ export interface Market {
   mazneCurrent: Toman;    // current base price set by admin
   active: boolean;
   createdAt: IsoDateTime;
+  // Room mode + thresholds (migration 0005)
+  mode: RoomMode;
+  parryThreshold?: Toman;        // فقط در حالت پری
+  marginWarnPct: number;         // پیش‌فرض ۷۵
+  marginLiquidatePct: number;    // پیش‌فرض ۸۵
+  tetherRateToday?: Toman;       // dynamic
+  tetherRateTomorrow?: Toman;
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
@@ -53,6 +60,8 @@ export type OrderSide = 'buy' | 'sell';
 export type OrderStatus = 'open' | 'partial' | 'filled' | 'cancelled' | 'expired';
 export type LafzKind = 'today' | 'tomorrow';
 
+export type PriceKind = 'relative' | 'absolute';
+
 export interface Order {
   id: ID;
   traderId: ID;
@@ -60,7 +69,8 @@ export interface Order {
   side: OrderSide;
   kind: LafzKind;
   lafz: number;                   // the integer the trader wrote (می‌تواند منفی باشد)
-  priceToman: Toman;              // computed: mazne + lafz * lafzScale
+  priceKind: PriceKind;           // relative (به مزنه) یا absolute (مطلق)
+  priceToman: Toman;              // computed: mazne + lafz * lafzScale (or absolute)
   quantity: number;               // units requested
   filled: number;                 // units already matched
   remaining: number;              // quantity - filled
@@ -153,15 +163,23 @@ export interface AuditEntry {
 }
 
 // ─── Margin ───────────────────────────────────────────────────────────────────
-export type MarginZone = 'safe' | 'warn' | 'risk' | 'call';
+// مدل دو-آستانه‌ای (مهدی، 2026-05-03):
+//   safe = درصد ضرر کمتر از warn_pct
+//   warn = درصد ضرر بین warn_pct تا liq_pct → هشدار به کاربر
+//   call = درصد ضرر ≥ liq_pct → حراج خودکار
+export type MarginZone = 'safe' | 'warn' | 'call';
 
 export interface MarginResult {
   requiredTether: Tether;
   availableTether: Tether;
   floatingPnLTether: Tether;
-  percentage: number;
+  /** درصد ضرر نسبت به ودیعه (0-100) — هرچه بزرگتر، خطرناک‌تر */
+  lossPercentage: number;
   zone: MarginZone;
 }
+
+// ─── Room operating mode ─────────────────────────────────────────────────────
+export type RoomMode = 'parry' | 'margin';
 
 // ─── Matching ─────────────────────────────────────────────────────────────────
 export interface MatchResult {

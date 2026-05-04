@@ -101,7 +101,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
                 {toFa(r.percentage.toFixed(1))}٪
               </td>
               <td className="px-3 py-2.5">
-                <ZoneBadge zone={r.zone as 'safe' | 'warn' | 'risk' | 'call'} />
+                <ZoneBadge zone={r.zone as 'safe' | 'warn' | 'call'} />
               </td>
             </tr>
           ))}
@@ -138,6 +138,13 @@ export default function SettlementControl() {
   const [reversalReason, setReversalReason] = useState('');
   const [confirmReverse, setConfirmReverse] = useState(false);
   const [reversing, setReversing] = useState(false);
+
+  // Emergency settlement (تصفیهٔ فوری/اضطراری — مهدی، 2026-05-03)
+  const [emergencyRate, setEmergencyRate] = useState('');
+  const [emergencyTether, setEmergencyTether] = useState('97000');
+  const [emergencyReason, setEmergencyReason] = useState('manual');
+  const [confirmEmergency, setConfirmEmergency] = useState(false);
+  const [applyingEmergency, setApplyingEmergency] = useState(false);
 
   // Archive
   const [archive, setArchive] = useState<Settlement[]>([]);
@@ -249,6 +256,33 @@ export default function SettlementControl() {
       toast.error(parseError(err));
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleApplyEmergency() {
+    if (!selectedMarketId || !emergencyRate) {
+      toast.error('نرخ تصفیهٔ فوری را وارد کنید');
+      return;
+    }
+    setApplyingEmergency(true);
+    try {
+      const { data, error } = await db.rpc('apply_emergency_settlement', {
+        p_market_id: selectedMarketId,
+        p_rate_toman: parseInt(emergencyRate, 10),
+        p_rate_tether: parseInt(emergencyTether, 10),
+        p_reason: emergencyReason,
+      });
+      if (error) throw error;
+      const result = data as unknown as { settlement_id: string; reason: string };
+      toast.success(`تصفیهٔ فوری اعمال شد (${result.reason === 'parry_triggered' ? 'پری ماشه‌خورد' : 'دستی'})`);
+      setEmergencyRate('');
+      setConfirmEmergency(false);
+      setReversalWindow(60 * 60); // پنجرهٔ ۶۰ دقیقه
+      setAppliedSettlement({ id: result.settlement_id, traders: 0 });
+    } catch (err) {
+      toast.error(parseError(err));
+    } finally {
+      setApplyingEmergency(false);
     }
   }
 
@@ -466,6 +500,75 @@ export default function SettlementControl() {
         </div>
       </div>
 
+      {/* Section 3.5: Emergency settlement (تصفیهٔ فوری) */}
+      <div
+        className="overflow-hidden rounded-xl border"
+        style={{
+          backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 6%, var(--bg-elevated))',
+          borderColor: 'color-mix(in srgb, var(--semantic-danger) 30%, var(--border-subtle))',
+        }}
+      >
+        <div className="border-b px-4 py-3 flex items-center gap-2" style={{ borderColor: 'color-mix(in srgb, var(--semantic-danger) 30%, var(--border-subtle))' }}>
+          <AlertTriangle size={14} style={{ color: 'var(--semantic-danger)' }} />
+          <p className="text-sm font-semibold" style={{ color: 'var(--semantic-danger)' }}>
+            تصفیهٔ فوری / اضطراری
+          </p>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            (شرایط غیرعادی — جنگ، نوسان شدید، ماشهٔ پری)
+          </span>
+        </div>
+        <div className="p-4 space-y-3">
+          <div className="flex flex-wrap items-end gap-3">
+            <div>
+              <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>نرخ تومانی</label>
+              <input
+                type="number"
+                value={emergencyRate}
+                onChange={(e) => setEmergencyRate(e.target.value)}
+                placeholder="185000000"
+                className="w-40 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>نرخ تتر</label>
+              <input
+                type="number"
+                value={emergencyTether}
+                onChange={(e) => setEmergencyTether(e.target.value)}
+                className="w-28 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>دلیل</label>
+              <select
+                value={emergencyReason}
+                onChange={(e) => setEmergencyReason(e.target.value)}
+                className="rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
+              >
+                <option value="manual">دستی</option>
+                <option value="parry_triggered">ماشهٔ پری</option>
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={() => setConfirmEmergency(true)}
+              disabled={!emergencyRate || applyingEmergency}
+              className="rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40 hover:opacity-80"
+              style={{ backgroundColor: 'var(--semantic-danger)', color: '#fff' }}
+            >
+              تصفیهٔ فوری
+            </button>
+          </div>
+          <p className="text-xs" style={{ color: 'var(--text-tertiary)' }}>
+            تصفیهٔ فوری معاملات روز جاری را قفل می‌کند و معاملات بعدی برای تاریخ تصفیهٔ فردا ثبت می‌شوند.
+            پنجرهٔ برگشت ۶۰ دقیقه است.
+          </p>
+        </div>
+      </div>
+
       {/* Section 4: Reversal */}
       {canReverse && (
         <div
@@ -617,6 +720,19 @@ export default function SettlementControl() {
         confirmLabel="برگشت تصفیه"
         variant="danger"
         loading={reversing}
+      />
+
+      {/* Confirm emergency */}
+      <ConfirmDialog
+        open={confirmEmergency}
+        onClose={() => setConfirmEmergency(false)}
+        onConfirm={handleApplyEmergency}
+        title="اعمال تصفیهٔ فوری"
+        description={`تصفیهٔ فوری با نرخ ${formatTomans(parseInt(emergencyRate || '0', 10))} اعمال می‌شود. معاملات روز جاری قفل و معاملات بعدی به فردا منتقل می‌شوند. ادامه می‌دهید؟`}
+        confirmLabel="تصفیهٔ فوری"
+        variant="danger"
+        requireType="تصفیه فوری"
+        loading={applyingEmergency}
       />
     </div>
   );

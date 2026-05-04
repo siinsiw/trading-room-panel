@@ -3,12 +3,11 @@ import { useSpring, useTransform, motion } from 'framer-motion';
 import { cn } from '@/lib/cn';
 import { toFa } from '@/lib/persian';
 
-export type MarginZone = 'safe' | 'warn' | 'risk' | 'call';
+export type MarginZone = 'safe' | 'warn' | 'call';
 
 const ZONE_COLOR: Record<MarginZone, string> = {
   safe: 'var(--semantic-success)',
-  warn: '#eab308',
-  risk: 'var(--semantic-warn)',
+  warn: 'var(--semantic-warn)',
   call: 'var(--semantic-danger)',
 };
 

@@ -1,6 +1,10 @@
 import { cn } from '@/lib/cn';
 
-export type MarginZone = 'safe' | 'warn' | 'risk' | 'call';
+// مدل دو-آستانه‌ای (مهدی، 2026-05-03):
+//   safe = ضرر کمتر از warn_pct → سالم
+//   warn = ضرر بین warn_pct و liq_pct → هشدار شارژ
+//   call = ضرر ≥ liq_pct → حراج خودکار
+export type MarginZone = 'safe' | 'warn' | 'call';
 
 interface ZoneConfig {
   label: string;
@@ -19,14 +23,7 @@ const ZONE_CONFIG: Record<MarginZone, ZoneConfig> = {
     borderColor: 'color-mix(in srgb, var(--semantic-success) 30%, transparent)',
   },
   warn: {
-    label: 'هشدار',
-    dotColor: '#eab308',
-    textColor: '#eab308',
-    bgColor: 'color-mix(in srgb, #eab308 12%, transparent)',
-    borderColor: 'color-mix(in srgb, #eab308 30%, transparent)',
-  },
-  risk: {
-    label: 'پرریسک',
+    label: 'هشدار شارژ',
     dotColor: 'var(--semantic-warn)',
     textColor: 'var(--semantic-warn)',
     bgColor: 'color-mix(in srgb, var(--semantic-warn) 12%, transparent)',
@@ -62,7 +59,6 @@ export function ZoneBadge({ zone, showLabel = true, className }: ZoneBadgeProps)
         color: cfg.textColor,
       }}
     >
-      {/* Dot */}
       <span
         className="inline-block rounded-full"
         style={{
@@ -77,3 +73,4 @@ export function ZoneBadge({ zone, showLabel = true, className }: ZoneBadgeProps)
     </span>
   );
 }
+

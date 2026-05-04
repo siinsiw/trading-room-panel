@@ -15,7 +15,7 @@ import { Lock, Unlock, Pencil, Check, X } from 'lucide-react';
 
 interface MarginInfo {
   percentage: number;
-  zone: 'safe' | 'warn' | 'risk' | 'call';
+  zone: 'safe' | 'warn' | 'call';
 }
 
 interface UserWithMargin {
@@ -230,15 +230,22 @@ export default function AdminDashboard() {
             p_tether_rate: 97000,
           });
           if (data) {
-            const m = data as unknown as { percentage: number; zone: 'safe' | 'warn' | 'risk' | 'call' };
-            if (m.zone !== 'safe') {
+            // RPC may return either legacy `percentage` or new `lossPercentage` —
+            // accept both to stay compatible across migrations.
+            const raw = data as unknown as {
+              percentage?: number;
+              lossPercentage?: number;
+              zone: 'safe' | 'warn' | 'call';
+            };
+            const lossPct = raw.lossPercentage ?? (100 - (raw.percentage ?? 100));
+            if (raw.zone !== 'safe') {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               const profile = await (supabase as any).from('profiles').select('*').eq('id', trader.id).single();
               if (profile.data) {
-                riskUsers.push({ profile: profile.data as Profile, margin: { percentage: m.percentage, zone: m.zone } });
+                riskUsers.push({ profile: profile.data as Profile, margin: { percentage: lossPct, zone: raw.zone } });
               }
             }
-            if (m.percentage < 50) dangerCount++;
+            if (raw.zone === 'call') dangerCount++;
           }
         }
         setRiskTraders(riskUsers.slice(0, 8));

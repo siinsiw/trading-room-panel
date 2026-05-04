@@ -17,7 +17,7 @@ interface MarginResult {
   available_tether: number;
   floating_pnl_tether: number;
   percentage: number;
-  zone: 'safe' | 'warn' | 'risk' | 'call';
+  zone: 'safe' | 'warn' | 'call';
 }
 
 interface StatCardProps {
