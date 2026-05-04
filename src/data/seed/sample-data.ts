@@ -28,6 +28,9 @@ export function generateSampleData() {
     mazneCurrent: MAZNE,
     active: true,
     createdAt: new Date().toISOString(),
+    mode: 'margin',
+    marginWarnPct: 75,
+    marginLiquidatePct: 85,
   };
 
   // ─── Admins ──────────────────────────────────────────────────────────────────
@@ -73,6 +76,7 @@ export function generateSampleData() {
       side,
       kind: i < 10 ? 'today' : 'tomorrow',
       lafz,
+      priceKind: 'relative',
       priceToman,
       quantity: 1 + Math.floor(Math.random() * 3),
       filled: 0,

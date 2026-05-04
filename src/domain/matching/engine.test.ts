@@ -11,6 +11,7 @@ function makeOrder(overrides: Partial<Order> = {}): Order {
     side: 'buy',
     kind: 'today',
     lafz: 100,
+    priceKind: 'relative',
     priceToman: 88_400_000,
     quantity: 1,
     filled: 0,
