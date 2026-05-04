@@ -12,6 +12,28 @@
 --  All foreign-key columns and RPC params reflect that.
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- ─── Drop any stale overloads from earlier migration attempts ─────────────
+-- (Without this, re-running with a different param signature leaves multiple
+--  overloads in pg_proc and CREATE OR REPLACE fails with "name is not unique".)
+do $$
+declare
+  r record;
+begin
+  for r in
+    select 'drop function public.' || proname || '(' || pg_get_function_identity_arguments(oid) || ');' as cmd
+    from pg_proc
+    where proname in (
+      'cancel_porat_lafz',
+      'owner_override_baraka',
+      'update_tether_rate',
+      'apply_emergency_settlement'
+    )
+    and pg_function_is_visible(oid)
+  loop
+    execute r.cmd;
+  end loop;
+end $$;
+
 -- ─── New enums ───────────────────────────────────────────────────────────────
 do $$ begin
   if not exists (select 1 from pg_type where typname = 'room_mode') then

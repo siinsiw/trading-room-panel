@@ -8,6 +8,24 @@
 --  NOTE: orders.id and markets.id are TEXT (not uuid) — see 0001_init.sql.
 -- ═══════════════════════════════════════════════════════════════════════════
 
+-- ─── Drop any stale overloads from earlier migration attempts ─────────────
+do $$
+declare
+  r record;
+begin
+  for r in
+    select 'drop function public.' || proname || '(' || pg_get_function_identity_arguments(oid) || ');' as cmd
+    from pg_proc
+    where proname in (
+      'liquidate_user_position',
+      'check_parry_breach'
+    )
+    and pg_function_is_visible(oid)
+  loop
+    execute r.cmd;
+  end loop;
+end $$;
+
 -- ─── Counter-offer columns ───────────────────────────────────────────────
 alter table public.orders
   add column if not exists parent_order_id   text          null references public.orders(id),
