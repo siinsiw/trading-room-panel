@@ -28,6 +28,9 @@ export interface Market {
   marginLiquidatePct: number;    // پیش‌فرض ۸۵
   tetherRateToday?: Toman;       // dynamic
   tetherRateTomorrow?: Toman;
+  // Migration 0007 (گودرزی dor 2)
+  liquidationToleranceToman?: Toman;  // پیش‌فرض ۲۰۰ — تلرانس قیمت حراج بات
+  parrySettlementPrice?: Toman;       // عدد تصفیهٔ آخر (برای محاسبهٔ پری)
 }
 
 // ─── User ─────────────────────────────────────────────────────────────────────
