@@ -1,14 +1,16 @@
 -- ═══════════════════════════════════════════════════════════════════════════
 --  Migration 0006 — Counter-offer + Liquidation + Parry-breach helper
---    1. Counter-offer columns on orders (parent_order_id, proposed_price, …)
+--    1. Counter-offer columns on orders (parent_order_id, proposed_by_user, …)
 --    2. RPC liquidate_user_position — flag positions as liquidated
 --    3. RPC check_parry_breach — returns true if last trade breached parry
 --    4. compute_user_margin → switch to 2-threshold model (loss_percentage)
+--
+--  NOTE: orders.id and markets.id are TEXT (not uuid) — see 0001_init.sql.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── Counter-offer columns ───────────────────────────────────────────────
 alter table public.orders
-  add column if not exists parent_order_id   uuid          null references public.orders(id),
+  add column if not exists parent_order_id   text          null references public.orders(id),
   add column if not exists proposed_by_user  uuid          null references public.profiles(id),
   add column if not exists is_counter_offer  boolean       not null default false;
 
@@ -19,12 +21,19 @@ comment on column public.orders.parent_order_id is
 comment on column public.orders.proposed_by_user is
   'For counter-offers: the user who proposed the alternative price';
 
+-- ─── trades: liquidation columns ─────────────────────────────────────────
+alter table public.trades
+  add column if not exists liquidated_at    timestamptz null,
+  add column if not exists liquidate_reason text        null;
+
+create index if not exists idx_trades_liquidated on public.trades(liquidated_at) where liquidated_at is not null;
+
 -- ─── RPC: liquidate_user_position ────────────────────────────────────────
 -- Flags every open trade of a user in a market as liquidated. Does NOT auto-close
 -- (since this is a P2P verbal market — actual closing requires admin intervention).
 create or replace function public.liquidate_user_position(
   p_user_id   uuid,
-  p_market_id uuid,
+  p_market_id text,
   p_reason    text default 'auto_margin_call'
 )
 returns json
@@ -54,18 +63,9 @@ begin
   return json_build_object('ok', true, 'trades_flagged', v_count);
 end $$;
 
--- Add liquidate columns on trades if not present
-alter table public.trades
-  add column if not exists liquidated_at    timestamptz null,
-  add column if not exists liquidate_reason text        null;
-
-create index if not exists idx_trades_liquidated on public.trades(liquidated_at) where liquidated_at is not null;
-
 -- ─── RPC: check_parry_breach ─────────────────────────────────────────────
--- Returns true if a given trade price breaches the parry threshold relative
--- to the latest settlement price for that market.
 create or replace function public.check_parry_breach(
-  p_market_id   uuid,
+  p_market_id   text,
   p_trade_price numeric
 )
 returns json
@@ -89,7 +89,6 @@ begin
     return json_build_object('breach', false, 'reason', 'no_threshold');
   end if;
 
-  -- Find latest non-reversed settlement for this market
   select * into v_last_settle
     from public.settlements
    where market_id = p_market_id
@@ -141,7 +140,7 @@ declare
   v_liq_pct        integer;
 begin
   select * into v_profile from public.profiles where id = p_user_id;
-  select * into v_market  from public.markets  where id = p_market_id::uuid;
+  select * into v_market  from public.markets  where id = p_market_id;
 
   v_warn_pct := coalesce(v_market.margin_warn_pct, 75);
   v_liq_pct  := coalesce(v_market.margin_liquidate_pct, 85);
@@ -158,7 +157,7 @@ begin
     ), 0)
   into v_open_units, v_floating_toman
   from public.trades t
-  where t.market_id = p_market_id::uuid
+  where t.market_id = p_market_id
     and t.settled = false
     and t.liquidated_at is null
     and (t.buyer_id = p_user_id or t.seller_id = p_user_id);
@@ -167,7 +166,6 @@ begin
   v_floating_tether := case when p_tether_rate > 0 then v_floating_toman::numeric / p_tether_rate else 0 end;
   v_available      := coalesce(v_profile.deposit_tether, 0) + v_floating_tether;
 
-  -- درصد ضرر = چقدر از ودیعه مورد نیاز در ضرر است
   v_loss_pct := case
     when v_required = 0 then 0
     else greatest(0, ((v_required - v_available) / v_required) * 100)

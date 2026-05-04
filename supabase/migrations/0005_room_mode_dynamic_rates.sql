@@ -7,6 +7,9 @@
 --    4. Owner override on expired/oversold lafz (not auto-cancel)
 --    5. Admin can cancel "لفظ پرت" (off-market) lafz
 --    6. Lafz can be absolute price OR relative to mazne
+--
+--  NOTE: orders.id and markets.id are TEXT (not uuid) — see 0001_init.sql.
+--  All foreign-key columns and RPC params reflect that.
 -- ═══════════════════════════════════════════════════════════════════════════
 
 -- ─── New enums ───────────────────────────────────────────────────────────────
@@ -19,11 +22,11 @@ end $$;
 -- ─── markets: add room_mode + parry threshold ───────────────────────────────
 alter table public.markets
   add column if not exists mode               room_mode  not null default 'margin',
-  add column if not exists parry_threshold    integer    null,           -- toman, only used in 'parry' mode
+  add column if not exists parry_threshold    integer    null,
   add column if not exists margin_warn_pct    integer    not null default 75,
   add column if not exists margin_liquidate_pct integer  not null default 85,
-  add column if not exists tether_rate_today  numeric    null,           -- last today-trade price (toman/usdt)
-  add column if not exists tether_rate_tomorrow numeric  null;           -- last tomorrow-trade price
+  add column if not exists tether_rate_today  numeric    null,
+  add column if not exists tether_rate_tomorrow numeric  null;
 
 comment on column public.markets.mode is
   'Operating mode: parry (circuit breaker at threshold) or margin (floating with warn/liq)';
@@ -81,7 +84,7 @@ update public.system_settings
 
 -- ─── RPC: cancel_porat_lafz (admin can cancel off-market lafz) ─────────────
 create or replace function public.cancel_porat_lafz(
-  p_order_id uuid,
+  p_order_id text,
   p_reason   text default 'admin_porat'
 )
 returns json
@@ -92,7 +95,6 @@ declare
   v_caller_role text;
   v_order public.orders%rowtype;
 begin
-  -- only admin / accountant can cancel as پرت
   v_caller_role := public.current_role();
   if v_caller_role not in ('admin', 'accountant') then
     raise exception 'فقط ادمین یا حسابدار می‌تواند لفظ پرت را لغو کند';
@@ -120,14 +122,14 @@ end $$;
 comment on function public.cancel_porat_lafz is
   'Admin/accountant cancel of an off-market (پرت) lafz with reason tracking';
 
--- ─── RPC: owner_override_baraka (owner accepts على expired or oversold) ────
+-- ─── RPC: owner_override_baraka ────────────────────────────────────────────
 create or replace function public.owner_override_baraka(
-  p_order_id     uuid,
+  p_order_id     text,
   p_buyer_id     uuid,
   p_seller_id    uuid,
   p_quantity     integer,
-  p_price_toman  numeric,
-  p_market_id    uuid
+  p_price_toman  bigint,
+  p_market_id    text
 )
 returns json
 language plpgsql
@@ -135,7 +137,7 @@ security definer
 as $$
 declare
   v_order public.orders%rowtype;
-  v_trade_id uuid;
+  v_trade_id text;
 begin
   select * into v_order from public.orders where id = p_order_id for update;
   if not found then
@@ -146,7 +148,6 @@ begin
     raise exception 'این لفظ لغو شده — override ممکن نیست';
   end if;
 
-  -- mark override
   update public.orders
      set overridden_at  = now(),
          override_count = override_count + 1,
@@ -158,7 +159,6 @@ begin
                           end
    where id = p_order_id;
 
-  -- create the trade row
   insert into public.trades (
     market_id, buyer_id, seller_id,
     buy_order_id, sell_order_id,
@@ -182,8 +182,8 @@ comment on function public.owner_override_baraka is
 
 -- ─── RPC: update_tether_rate (called by bot on each trade) ─────────────────
 create or replace function public.update_tether_rate(
-  p_market_id uuid,
-  p_kind      text,           -- 'today' | 'tomorrow'
+  p_market_id text,
+  p_kind      text,
   p_rate      numeric
 )
 returns void
@@ -204,10 +204,11 @@ comment on function public.update_tether_rate is
   'Bot writes the latest trade price as the dynamic tether rate (per kind)';
 
 -- ─── RPC: apply_emergency_settlement (manual or parry-triggered) ───────────
+-- Wraps apply_settlement(text,date,bigint,bigint) with audit + reason flag.
 create or replace function public.apply_emergency_settlement(
-  p_market_id      uuid,
-  p_rate_toman     numeric,
-  p_rate_tether    numeric,
+  p_market_id      text,
+  p_rate_toman     bigint,
+  p_rate_tether    bigint,
   p_reason         text default 'manual'    -- 'manual' | 'parry_triggered'
 )
 returns json
@@ -216,17 +217,18 @@ security definer
 as $$
 declare
   v_caller_role text;
-  v_settlement_id uuid;
+  v_result      jsonb;
+  v_settlement_id text;
   v_today date := current_date;
 begin
   v_caller_role := public.current_role();
-  if v_caller_role not in ('admin') and p_reason = 'manual' then
+  if p_reason = 'manual' and v_caller_role <> 'admin' then
     raise exception 'فقط ادمین می‌تواند تصفیهٔ فوری دستی بزند';
   end if;
 
-  -- Run normal apply_settlement with the emergency flag (we reuse the same logic)
-  -- Mark in audit / settlement note
-  select public.apply_settlement(p_market_id, p_rate_toman, p_rate_tether) into v_settlement_id;
+  -- apply_settlement signature: (text, date, bigint, bigint) returns jsonb
+  v_result := public.apply_settlement(p_market_id, v_today, p_rate_toman, p_rate_tether);
+  v_settlement_id := v_result->>'settlement_id';
 
   insert into public.audit_log (actor_id, actor_role, action, payload)
   values (
@@ -234,10 +236,10 @@ begin
     v_caller_role,
     'EMERGENCY_SETTLEMENT',
     json_build_object(
-      'market_id', p_market_id,
-      'rate_toman', p_rate_toman,
-      'rate_tether', p_rate_tether,
-      'reason', p_reason,
+      'market_id',    p_market_id,
+      'rate_toman',   p_rate_toman,
+      'rate_tether',  p_rate_tether,
+      'reason',       p_reason,
       'settlement_id', v_settlement_id
     )
   );
