@@ -36,6 +36,10 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
   const [groupId,     setGroupId]     = useState(user.member_group_id ?? '');
   const [referrerId,  setReferrerId]  = useState(user.referrer_id ?? '');
   const [bonusPct,    setBonusPct]    = useState(user.referral_bonus_pct?.toString() ?? '');
+  // migration 0008
+  const [isCreditUser, setIsCreditUser]       = useState(Boolean((user as Profile & { is_credit_user?: boolean }).is_credit_user));
+  const [creditUnits,  setCreditUnits]        = useState(((user as Profile & { credit_units?: number | null }).credit_units ?? '').toString());
+  const [marginCallDisabled, setMarginCallDisabled] = useState(Boolean((user as Profile & { margin_call_disabled?: boolean }).margin_call_disabled));
   const [groups,      setGroups]      = useState<MemberGroup[]>([]);
   const [saving,      setSaving]      = useState(false);
 
@@ -66,6 +70,10 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
         member_group_id:     groupId    || null,
         referrer_id:         referrerId || null,
         referral_bonus_pct:  bonusPct   !== '' ? parseFloat(bonusPct)   : null,
+        // migration 0008
+        is_credit_user:        isCreditUser,
+        credit_units:          isCreditUser && creditUnits !== '' ? parseInt(creditUnits, 10) : null,
+        margin_call_disabled:  marginCallDisabled,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,6 +145,58 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
         ) },
         { label: 'سقف موقعیت باز (واحد)', key: 'maxUnits', render: () => (
           <input type="number" inputMode="numeric" value={maxUnits} onChange={(e) => setMaxUnits(e.target.value)} placeholder="خالی = بدون محدودیت" className={inputCls} style={inputStyle} />
+        ) },
+      ],
+    },
+    {
+      title: 'نوع حساب و کنترل ریسک',
+      fields: [
+        { label: 'نوع حساب', key: 'accountType', render: () => (
+          <div className="flex items-center gap-3 pt-2">
+            <button type="button" onClick={() => setIsCreditUser(false)}
+              className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
+              style={!isCreditUser ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+              ودیعه‌ای
+            </button>
+            <button type="button" onClick={() => setIsCreditUser(true)}
+              className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
+              style={isCreditUser ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+              اعتباری
+            </button>
+          </div>
+        ) },
+        { label: 'تعداد واحد اعتبار', key: 'creditUnits', render: () => (
+          <input
+            type="number"
+            inputMode="numeric"
+            disabled={!isCreditUser}
+            value={creditUnits}
+            onChange={(e) => setCreditUnits(e.target.value)}
+            placeholder={isCreditUser ? 'مثلاً ۵' : 'فقط برای کاربر اعتباری'}
+            className={inputCls}
+            style={{ ...inputStyle, opacity: isCreditUser ? 1 : 0.5 }}
+          />
+        ) },
+        { label: 'حراج خودکار (کال مارجین)', key: 'marginDisable', render: () => (
+          <div>
+            <div className="flex items-center gap-3 pt-2">
+              <button type="button" onClick={() => setMarginCallDisabled(false)}
+                className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
+                style={!marginCallDisabled ? { backgroundColor: 'var(--semantic-success)', color: '#000', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                فعال
+              </button>
+              <button type="button" onClick={() => setMarginCallDisabled(true)}
+                className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
+                style={marginCallDisabled ? { backgroundColor: 'var(--semantic-warn)', color: '#000', borderColor: 'var(--semantic-warn)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                غیرفعال
+              </button>
+            </div>
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              {marginCallDisabled
+                ? '⚠️ بات روی این کاربر حراج نمی‌زند. مدیر باید اعتبار طرف را قبول داشته باشد.'
+                : 'بات هنگام رسیدن به آستانهٔ حراج، موقعیت‌ها را خودکار می‌بندد.'}
+            </p>
+          </div>
         ) },
       ],
     },

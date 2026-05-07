@@ -20,6 +20,10 @@ export type Database = {
           max_open_units: number | null;
           approved_by: string | null;
           approved_at: string | null;
+          // migration 0008
+          is_credit_user: boolean;
+          credit_units: number | null;
+          margin_call_disabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -40,6 +44,9 @@ export type Database = {
           max_open_units?: number | null;
           approved_by?: string | null;
           approved_at?: string | null;
+          is_credit_user?: boolean;
+          credit_units?: number | null;
+          margin_call_disabled?: boolean;
         };
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
       };
