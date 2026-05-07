@@ -8,8 +8,10 @@ import { SkeletonCard } from '@/ui/compounds/LoadingSkeleton';
 import { EmptyState } from '@/ui/compounds/EmptyState';
 import { ConfirmDialog } from '@/ui/compounds/ConfirmDialog';
 import type { Profile } from '@/lib/database.types';
-import { Search, UserPlus, Pencil } from 'lucide-react';
+import { Search, UserPlus, Pencil, Users as UsersIcon, FileSpreadsheet, FileText } from 'lucide-react';
 import { EditUserModal } from './EditUserModal';
+import { BulkUpdateModal } from './BulkUpdateModal';
+import { exportToCSV, exportToExcel, todayStamp, type ExportColumn } from '@/lib/exports';
 
 type TabId = 'all' | 'admin' | 'accountant' | 'trader' | 'pending';
 
@@ -322,6 +324,29 @@ export default function UsersManagement() {
   const [rejectTarget, setRejectTarget] = useState<Profile | null>(null);
   const [editTarget, setEditTarget] = useState<Profile | null>(null);
   const [showNewUser, setShowNewUser] = useState(false);
+  // ─── Row selection (for bulk-update + export) ────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showBulk, setShowBulk] = useState(false);
+  function toggleSelected(id: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+  function toggleSelectAll(visible: Profile[]) {
+    setSelectedIds((prev) => {
+      const visIds = visible.map((p) => p.id);
+      const allSelected = visIds.every((id) => prev.has(id));
+      if (allSelected) {
+        const next = new Set(prev);
+        for (const id of visIds) next.delete(id);
+        return next;
+      }
+      return new Set([...prev, ...visIds]);
+    });
+  }
 
   const fetchProfiles = useCallback(async () => {
     try {
@@ -381,19 +406,55 @@ export default function UsersManagement() {
     pending: 'در انتظار تأیید',
   };
 
+  // ─── Export helpers (همهٔ کاربران فیلتر فعلی) ────────────────
+  const exportCols: ExportColumn<Profile>[] = [
+    { key: 'full_name', header: 'نام', format: (p) => p.full_name },
+    { key: 'phone', header: 'موبایل', format: (p) => p.phone },
+    { key: 'telegram_id', header: 'تلگرام', format: (p) => p.telegram_id ?? '' },
+    { key: 'role', header: 'نقش', format: (p) => p.role === 'admin' ? 'ادمین' : p.role === 'accountant' ? 'حسابدار' : 'تریدر' },
+    { key: 'active', header: 'وضعیت', format: (p) => p.active ? 'فعال' : 'غیرفعال' },
+    { key: 'deposit_tether', header: 'ودیعه (تتر)', format: (p) => p.deposit_tether ?? '' },
+    { key: 'per_unit_deposit', header: 'بیعانه هر واحد', format: (p) => p.per_unit_deposit ?? '' },
+    { key: 'commission_per_unit', header: 'کمیسیون هر واحد (تومان)', format: (p) => p.commission_per_unit ?? '' },
+    { key: 'max_open_units', header: 'سقف موقعیت باز', format: (p) => p.max_open_units ?? '' },
+    { key: 'is_credit_user', header: 'نوع حساب', format: (p) => p.is_credit_user ? 'اعتباری' : 'ودیعه‌ای' },
+    { key: 'credit_units', header: 'واحد اعتبار', format: (p) => p.credit_units ?? '' },
+    { key: 'margin_call_disabled', header: 'کال مارجین', format: (p) => p.margin_call_disabled ? 'غیرفعال' : 'فعال' },
+  ];
+  const onExportCSV   = () => exportToCSV(`users-${todayStamp()}`, exportCols, filtered);
+  const onExportExcel = () => exportToExcel(`users-${todayStamp()}`, exportCols, filtered, 'کاربران');
+
+  const selectedCount = selectedIds.size;
+  const selectableTraders = filtered.filter((p) => p.role === 'trader');
+
   return (
     <div className="space-y-5" dir="rtl">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>مدیریت کاربران</h1>
-        <button
-          type="button"
-          onClick={() => setShowNewUser(true)}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80 transition-opacity"
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
-        >
-          <UserPlus size={16} />
-          کاربر جدید
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {selectedCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setShowBulk(true)}
+              className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors"
+              style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+            >
+              <UsersIcon size={16} />
+              ویرایش گروهی ({toFa(selectedCount)})
+            </button>
+          )}
+          <button type="button" onClick={onExportCSV}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExportExcel} disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button
+            type="button"
+            onClick={() => setShowNewUser(true)}
+            className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80 transition-opacity"
+            style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          >
+            <UserPlus size={16} />
+            کاربر جدید
+          </button>
+        </div>
       </div>
 
       {/* Search */}
@@ -519,15 +580,27 @@ export default function UsersManagement() {
                     style={{ borderCollapse: 'separate', borderSpacing: 0, minWidth: 720, tableLayout: 'fixed' }}
                   >
                     <colgroup>
-                      <col style={{ width: '24%' }} />
-                      <col style={{ width: '18%' }} />
-                      <col style={{ width: '12%' }} />
-                      <col style={{ width: '14%' }} />
+                      <col style={{ width: '4%' }} />
+                      <col style={{ width: '22%' }} />
+                      <col style={{ width: '17%' }} />
+                      <col style={{ width: '11%' }} />
+                      <col style={{ width: '13%' }} />
                       <col style={{ width: '20%' }} />
-                      <col style={{ width: '12%' }} />
+                      <col style={{ width: '13%' }} />
                     </colgroup>
                     <thead>
                       <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
+                        <th className="px-3 py-3" style={{ textAlign: 'right' }}>
+                          <input
+                            type="checkbox"
+                            aria-label="انتخاب همه"
+                            disabled={selectableTraders.length === 0}
+                            checked={selectableTraders.length > 0 && selectableTraders.every((p) => selectedIds.has(p.id))}
+                            onChange={() => toggleSelectAll(selectableTraders)}
+                            className="cursor-pointer accent-current"
+                            style={{ accentColor: 'var(--accent-gold)' }}
+                          />
+                        </th>
                         {(['نام', 'موبایل', 'نقش', 'وضعیت', 'ودیعه', 'عملیات'] as const).map((h) => (
                           <th
                             key={h}
@@ -546,6 +619,18 @@ export default function UsersManagement() {
                           className="border-t transition-colors hover:bg-white/5"
                           style={{ borderColor: 'var(--border-subtle)' }}
                         >
+                          <td className="px-3 py-3" style={{ textAlign: 'right' }}>
+                            {p.role === 'trader' ? (
+                              <input
+                                type="checkbox"
+                                aria-label={`انتخاب ${p.full_name}`}
+                                checked={selectedIds.has(p.id)}
+                                onChange={() => toggleSelected(p.id)}
+                                className="cursor-pointer"
+                                style={{ accentColor: 'var(--accent-gold)' }}
+                              />
+                            ) : null}
+                          </td>
                           <td className="px-4 py-3" style={{ textAlign: 'right' }}>
                             <div className="flex items-center gap-2">
                               <div
@@ -642,6 +727,14 @@ export default function UsersManagement() {
           allTraders={profiles.filter((p) => p.role === 'trader')}
           onClose={() => setEditTarget(null)}
           onSaved={fetchProfiles}
+        />
+      )}
+
+      {showBulk && (
+        <BulkUpdateModal
+          userIds={[...selectedIds]}
+          onClose={() => setShowBulk(false)}
+          onSaved={() => { setSelectedIds(new Set()); fetchProfiles(); }}
         />
       )}
     </div>

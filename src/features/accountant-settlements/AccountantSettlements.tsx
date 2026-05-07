@@ -6,7 +6,8 @@ import { repos } from '@/data/repositories/index';
 import { SkeletonCard } from '@/ui/compounds/LoadingSkeleton';
 import { EmptyState } from '@/ui/compounds/EmptyState';
 import type { Settlement } from '@/domain/types';
-import { X } from 'lucide-react';
+import { X, FileSpreadsheet, FileText, Printer } from 'lucide-react';
+import { exportToCSV, exportToExcel, printPdfReport, todayStamp, type ExportColumn } from '@/lib/exports';
 
 interface SnapshotRow {
   userId?: string;
@@ -131,6 +132,43 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
               </p>
             </div>
           )}
+
+          {/* خروجی PDF این تصفیه */}
+          <div className="flex justify-end pt-2">
+            <button
+              type="button"
+              onClick={() => printPdfReport({
+                title:    `گزارش تصفیه — ${settlement.settlementDate}`,
+                subtitle: settlement.reversedAt ? 'این تصفیه برگشت خورده است' : undefined,
+                columns:  [
+                  { header: 'شناسه تریدر' },
+                  { header: 'ودیعه قبل (تتر)' },
+                  { header: 'ودیعه بعد (تتر)' },
+                  { header: 'P&L (تومان)' },
+                  { header: 'کمیسیون (تومان)' },
+                ],
+                rows: snapshot.map((row) => [
+                  String(row.userId ?? '').slice(-8),
+                  row.depositBefore != null ? Number(row.depositBefore).toFixed(2) : '—',
+                  row.depositAfter  != null ? Number(row.depositAfter).toFixed(2)  : '—',
+                  row.pnL           != null ? Number(row.pnL).toLocaleString('fa-IR') : '—',
+                  row.commission    != null ? Number(row.commission).toLocaleString('fa-IR') : '—',
+                ]),
+                meta: [
+                  { label: 'نرخ تومان',     value: settlement.rateToman.toLocaleString('fa-IR') },
+                  { label: 'نرخ تتر',       value: settlement.rateTether.toLocaleString('fa-IR') },
+                  { label: 'تعداد معاملات', value: settlement.totalTradesCount.toLocaleString('fa-IR') },
+                  { label: 'حجم کل',        value: settlement.totalVolumeUnits.toLocaleString('fa-IR') + ' واحد' },
+                  { label: 'کمیسیون کل',    value: settlement.totalCommissionToman.toLocaleString('fa-IR') + ' تومان' },
+                  { label: 'زمان اعمال',    value: new Date(settlement.appliedAt).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' }) },
+                ],
+              })}
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5"
+              style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
+            >
+              <Printer size={13} /> PDF این تصفیه
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -155,9 +193,50 @@ export default function AccountantSettlements() {
 
   useEffect(() => { fetchSettlements(); }, [fetchSettlements]);
 
+  // ─── Export helpers ─────────────────────────────────────────────
+  const exportCols: ExportColumn<Settlement>[] = [
+    { key: 'settlementDate', header: 'تاریخ تصفیه', format: (s) => s.settlementDate },
+    { key: 'rateToman', header: 'نرخ تومان', format: (s) => s.rateToman },
+    { key: 'rateTether', header: 'نرخ تتر', format: (s) => s.rateTether },
+    { key: 'totalTradesCount', header: 'تعداد معاملات', format: (s) => s.totalTradesCount },
+    { key: 'totalVolumeUnits', header: 'حجم کل (واحد)', format: (s) => s.totalVolumeUnits },
+    { key: 'totalCommissionToman', header: 'کمیسیون کل (تومان)', format: (s) => s.totalCommissionToman },
+    { key: 'appliedAt', header: 'زمان اعمال', format: (s) => new Date(s.appliedAt).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' }) },
+    { key: 'reversedAt', header: 'وضعیت', format: (s) => s.reversedAt ? `برگشت — ${s.reversalReason ?? ''}` : 'فعال' },
+  ];
+  const fname = `settlements-${todayStamp()}`;
+  const onCSV   = () => exportToCSV(fname, exportCols, settlements);
+  const onExcel = () => exportToExcel(fname, exportCols, settlements, 'تصفیه‌ها');
+  const onPdf   = () => printPdfReport({
+    title:    'گزارش تصفیه‌ها',
+    columns:  exportCols.map((c) => ({ header: c.header })),
+    rows:     settlements.map((s) => exportCols.map((c) => c.format!(s) as string | number | null)),
+    summaryRows: [[
+      'مجموع',
+      '',
+      '',
+      settlements.reduce((s, x) => s + x.totalTradesCount, 0),
+      settlements.reduce((s, x) => s + x.totalVolumeUnits, 0),
+      settlements.reduce((s, x) => s + x.totalCommissionToman, 0),
+      '',
+      '',
+    ]],
+    meta: [
+      { label: 'تعداد تصفیه‌ها', value: toFa(settlements.length) },
+      { label: 'تاریخ گزارش',  value: new Date().toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' }) },
+    ],
+  });
+
   return (
     <div className="space-y-5" dir="rtl">
-      <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>تصفیه‌ها</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>تصفیه‌ها</h1>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onCSV}   disabled={settlements.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExcel} disabled={settlements.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button type="button" onClick={onPdf}   disabled={settlements.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
+        </div>
+      </div>
 
       {loading ? (
         <SkeletonCard lines={5} />

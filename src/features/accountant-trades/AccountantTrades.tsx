@@ -6,7 +6,8 @@ import { repos } from '@/data/repositories/index';
 import { SkeletonCard } from '@/ui/compounds/LoadingSkeleton';
 import { EmptyState } from '@/ui/compounds/EmptyState';
 import type { Trade } from '@/domain/types';
-import { Search, X } from 'lucide-react';
+import { Search, X, FileSpreadsheet, FileText, Printer } from 'lucide-react';
+import { exportToCSV, exportToExcel, printPdfReport, todayStamp, type ExportColumn } from '@/lib/exports';
 
 interface TradeDrawerProps {
   trade: Trade;
@@ -103,9 +104,41 @@ export default function AccountantTrades() {
     return true;
   });
 
+  const exportCols: ExportColumn<Trade>[] = [
+    { key: 'matchedAt', header: 'زمان', format: (t) => new Date(t.matchedAt).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' }) },
+    { key: 'kind', header: 'نوع', format: (t) => t.kind === 'today' ? 'امروزی' : 'فردایی' },
+    { key: 'buyerId', header: 'خریدار', format: (t) => t.buyerId },
+    { key: 'sellerId', header: 'فروشنده', format: (t) => t.sellerId },
+    { key: 'quantity', header: 'حجم', format: (t) => t.quantity },
+    { key: 'priceToman', header: 'قیمت (تومان)', format: (t) => t.priceToman },
+    { key: 'tradeType', header: 'دسته', format: (t) => t.tradeType === 'rent' ? 'اجاره' : t.tradeType === 'blocked' ? 'بلوکه' : 'عادی' },
+    { key: 'settled', header: 'وضعیت', format: (t) => t.settled ? 'تسویه‌شده' : 'باز' },
+    { key: 'buyerPnLToman', header: 'P&L خریدار', format: (t) => t.buyerPnLToman ?? '' },
+    { key: 'sellerPnLToman', header: 'P&L فروشنده', format: (t) => t.sellerPnLToman ?? '' },
+  ];
+  const fname = `accountant-trades-${todayStamp()}`;
+  const onCSV   = () => exportToCSV(fname, exportCols, filtered);
+  const onExcel = () => exportToExcel(fname, exportCols, filtered, 'معاملات');
+  const onPdf   = () => printPdfReport({
+    title:   'گزارش معاملات حسابداری',
+    columns: exportCols.map((c) => ({ header: c.header })),
+    rows:    filtered.map((t) => exportCols.map((c) => c.format!(t) as string | number | null)),
+    meta:    [
+      { label: 'تعداد رکوردها', value: toFa(filtered.length) },
+      { label: 'تاریخ گزارش',  value: new Date().toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' }) },
+    ],
+  });
+
   return (
     <div className="space-y-5" dir="rtl">
-      <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>معاملات</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>معاملات</h1>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onCSV}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExcel} disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button type="button" onClick={onPdf}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
+        </div>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3">

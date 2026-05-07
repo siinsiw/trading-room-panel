@@ -305,10 +305,18 @@ export type Database = {
       };
       bulk_update_traders: {
         Args: {
+          p_user_ids?: string[] | null;
           p_target_group_id?: string | null;
           p_per_unit_deposit?: number | null;
           p_commission_per_unit?: number | null;
           p_max_open_units?: number | null;
+          p_member_group_id?: string | null;
+          p_referrer_id?: string | null;
+          p_referral_bonus_pct?: number | null;
+          p_active?: boolean | null;
+          p_is_credit_user?: boolean | null;
+          p_credit_units?: number | null;
+          p_margin_call_disabled?: boolean | null;
         };
         Returns: number;
       };

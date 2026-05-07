@@ -7,7 +7,8 @@ import { supabase } from '@/lib/supabase';
 import { useRealtime } from '@/hooks/useRealtime';
 import { SkeletonCard } from '@/ui/compounds/LoadingSkeleton';
 import { EmptyState } from '@/ui/compounds/EmptyState';
-import { Search, X, Bot, User as UserIcon, Pencil } from 'lucide-react';
+import { Search, X, Bot, User as UserIcon, Pencil, FileSpreadsheet, FileText, Printer } from 'lucide-react';
+import { exportToCSV, exportToExcel, printPdfReport, todayStamp, type ExportColumn } from '@/lib/exports';
 
 // ─── Types ────────────────────────────────────────────────────────
 interface TradeRow {
@@ -82,6 +83,33 @@ function SettledBadge({ settled }: { settled: boolean }) {
     >
       {settled ? 'تسویه‌شده' : 'باز'}
     </span>
+  );
+}
+
+// ─── Export buttons (CSV / Excel / PDF) ─────────────────────────
+function ExportButtons({ disabled, onCSV, onExcel, onPdf }: {
+  disabled: boolean;
+  onCSV: () => void;
+  onExcel: () => void;
+  onPdf: () => void;
+}) {
+  const baseStyle: React.CSSProperties = {
+    borderColor: 'var(--border-strong)',
+    color: 'var(--text-primary)',
+  };
+  const btnCls = 'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed';
+  return (
+    <div className="flex items-center gap-2">
+      <button type="button" onClick={onCSV} disabled={disabled} className={btnCls} style={baseStyle} title="دانلود CSV (با BOM utf-8)">
+        <FileText size={13} /> CSV
+      </button>
+      <button type="button" onClick={onExcel} disabled={disabled} className={btnCls} style={baseStyle} title="دانلود اکسل (xlsx، RTL)">
+        <FileSpreadsheet size={13} /> اکسل
+      </button>
+      <button type="button" onClick={onPdf} disabled={disabled} className={btnCls} style={baseStyle} title="پرینت / ذخیره به‌صورت PDF">
+        <Printer size={13} /> PDF
+      </button>
+    </div>
   );
 }
 
@@ -207,13 +235,46 @@ export default function TradesList() {
   const todayCount    = trades.filter((t) => t.kind === 'today').length;
   const tomorrowCount = trades.filter((t) => t.kind === 'tomorrow').length;
 
+  // ─── Export helpers ─────────────────────────────────────────────
+  const exportCols: ExportColumn<TradeRow>[] = [
+    { key: 'matched_at', header: 'زمان', format: (t) => new Date(t.matched_at).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' }) },
+    { key: 'kind', header: 'نوع', format: (t) => t.kind === 'today' ? 'امروزی' : 'فردایی' },
+    { key: 'buyer', header: 'خریدار', format: (t) => t.buyer?.full_name ?? '—' },
+    { key: 'seller', header: 'فروشنده', format: (t) => t.seller?.full_name ?? '—' },
+    { key: 'quantity', header: 'حجم', format: (t) => t.quantity },
+    { key: 'price_toman', header: 'قیمت (تومان)', format: (t) => t.price_toman },
+    { key: 'trade_type', header: 'دسته', format: (t) => t.trade_type === 'rent' ? 'اجاره' : t.trade_type === 'blocked' ? 'بلوکه' : 'عادی' },
+    { key: 'rent_block_value', header: 'عدد اجاره/بلوکه', format: (t) => t.rent_block_value ?? '' },
+    { key: 'source', header: 'منبع', format: (t) => t.source === 'bot' ? 'بات' : t.source === 'panel' ? 'پنل' : 'دستی' },
+    { key: 'settled', header: 'وضعیت', format: (t) => t.settled ? 'تسویه‌شده' : 'باز' },
+    { key: 'buyer_pnl_toman', header: 'P&L خریدار', format: (t) => t.buyer_pnl_toman ?? '' },
+    { key: 'seller_pnl_toman', header: 'P&L فروشنده', format: (t) => t.seller_pnl_toman ?? '' },
+    { key: 'note', header: 'یادداشت', format: (t) => t.note ?? '' },
+  ];
+  const baseFilename = `trades-${tab}-${todayStamp()}`;
+  const onCSV    = () => exportToCSV(baseFilename, exportCols, filtered);
+  const onExcel  = () => exportToExcel(baseFilename, exportCols, filtered, tab === 'today' ? 'معاملات امروزی' : 'معاملات فردایی');
+  const onPdf    = () => printPdfReport({
+    title:    `معاملات ${tab === 'today' ? 'امروزی' : 'فردایی'}`,
+    subtitle: `تاریخ گزارش: ${new Date().toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' })}`,
+    columns:  exportCols.slice(0, 9).map((c) => ({ header: c.header })),
+    rows:     filtered.map((t) => exportCols.slice(0, 9).map((c) => c.format!(t) as string | number | null)),
+    meta:     [
+      { label: 'تعداد رکوردها', value: toFa(filtered.length) },
+      { label: 'حجم کل',        value: toFa(filtered.reduce((s, t) => s + t.quantity, 0)) + ' واحد' },
+    ],
+  });
+
   return (
     <div className="space-y-5" dir="rtl">
-      <div>
-        <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>لیست معاملات</h1>
-        <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
-          همه‌ی معاملات از بات و پنل + سرچ بر اساس نام معامله‌گر
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>لیست معاملات</h1>
+          <p className="text-xs mt-1" style={{ color: 'var(--text-tertiary)' }}>
+            همه‌ی معاملات از بات و پنل + سرچ بر اساس نام معامله‌گر
+          </p>
+        </div>
+        <ExportButtons disabled={filtered.length === 0} onCSV={onCSV} onExcel={onExcel} onPdf={onPdf} />
       </div>
 
       {/* Search */}
