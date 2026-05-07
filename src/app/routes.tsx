@@ -22,6 +22,7 @@ const UsersManagement   = lazy(() => import('@/features/users-management/UsersMa
 const SettlementControl = lazy(() => import('@/features/settlement-control/SettlementControl'));
 const AdminTradesList   = lazy(() => import('@/features/trades-list/TradesList'));
 const ManualTradeEntry  = lazy(() => import('@/features/manual-trade/ManualTradeEntry'));
+const HolidaysManagement = lazy(() => import('@/features/holidays-management/HolidaysManagement'));
 
 // Trader
 const TraderOrderbook = lazy(() => import('@/features/trader-orderbook/TraderOrderbook'));
@@ -82,6 +83,7 @@ export const routes: RouteObject[] = [
               { path: '/admin/settlement',    element: <Wrap><SettlementControl /></Wrap> },
               { path: '/admin/trades',        element: <Wrap><AdminTradesList /></Wrap> },
               { path: '/admin/manual-trade',  element: <Wrap><ManualTradeEntry /></Wrap> },
+              { path: '/admin/holidays',      element: <Wrap><HolidaysManagement /></Wrap> },
               { path: '/admin/profile',       element: <Wrap><MyProfilePage /></Wrap> },
             ],
           },

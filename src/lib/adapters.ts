@@ -16,6 +16,8 @@ export function dbToMarket(d: DBMarket): Market {
     margin_liquidate_pct?: number | null;
     tether_rate_today?: number | null;
     tether_rate_tomorrow?: number | null;
+    liquidation_tolerance_toman?: number | null;
+    parry_settlement_price?: number | null;
   };
   return {
     id: d.id,
@@ -35,6 +37,10 @@ export function dbToMarket(d: DBMarket): Market {
     marginLiquidatePct: dx.margin_liquidate_pct ?? 85,
     tetherRateToday: dx.tether_rate_today == null ? undefined : Number(dx.tether_rate_today),
     tetherRateTomorrow: dx.tether_rate_tomorrow == null ? undefined : Number(dx.tether_rate_tomorrow),
+    liquidationToleranceToman:
+      dx.liquidation_tolerance_toman == null ? 200 : Number(dx.liquidation_tolerance_toman),
+    parrySettlementPrice:
+      dx.parry_settlement_price == null ? undefined : Number(dx.parry_settlement_price),
   };
 }
 

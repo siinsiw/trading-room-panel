@@ -32,6 +32,9 @@ export const repos = {
         parry_threshold: m.parryThreshold ?? null,
         margin_warn_pct: m.marginWarnPct ?? 75,
         margin_liquidate_pct: m.marginLiquidatePct ?? 85,
+        // migration 0007 — tolerance + parry settlement price
+        liquidation_tolerance_toman: m.liquidationToleranceToman ?? 200,
+        parry_settlement_price: m.parrySettlementPrice ?? null,
       } as Parameters<typeof marketsRepo.create>[0]);
       return dbToMarket(d);
     },
@@ -50,6 +53,12 @@ export const repos = {
         ...(patch.parryThreshold     !== undefined && { parry_threshold:      patch.parryThreshold ?? null }),
         ...(patch.marginWarnPct      !== undefined && { margin_warn_pct:      patch.marginWarnPct }),
         ...(patch.marginLiquidatePct !== undefined && { margin_liquidate_pct: patch.marginLiquidatePct }),
+        ...(patch.liquidationToleranceToman !== undefined && {
+          liquidation_tolerance_toman: patch.liquidationToleranceToman,
+        }),
+        ...(patch.parrySettlementPrice !== undefined && {
+          parry_settlement_price: patch.parrySettlementPrice ?? null,
+        }),
       });
       return dbToMarket(d);
     },

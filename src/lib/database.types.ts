@@ -76,6 +76,9 @@ export type Database = {
           margin_liquidate_pct: number;
           tether_rate_today: number | null;
           tether_rate_tomorrow: number | null;
+          // migration 0007
+          liquidation_tolerance_toman: number;
+          parry_settlement_price: number | null;
         };
         Insert: Omit<Database['public']['Tables']['markets']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['markets']['Insert']>;

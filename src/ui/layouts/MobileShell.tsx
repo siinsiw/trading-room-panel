@@ -10,6 +10,7 @@ import {
   FileText,
   PlusCircle,
   Lock,
+  CalendarOff,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { cn } from '@/lib/cn';
@@ -28,6 +29,7 @@ const adminNav: NavItem[] = [
   { label: 'تصفیه',    to: '/admin/settlement',    icon: <FileText size={20} /> },
   { label: 'معاملات',   to: '/admin/trades',        icon: <BarChart2 size={20} /> },
   { label: 'ثبت دستی', to: '/admin/manual-trade',  icon: <PlusCircle size={20} /> },
+  { label: 'تعطیلات',   to: '/admin/holidays',      icon: <CalendarOff size={20} /> },
   { label: 'پروفایل',  to: '/admin/profile',       icon: <User size={20} /> },
 ];
 

@@ -15,6 +15,7 @@ import {
   PlusCircle,
   PanelRightClose,
   PanelRightOpen,
+  CalendarOff,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTimeStore } from '@/stores/time.store';
@@ -36,6 +37,7 @@ const adminNav: NavItem[] = [
   { label: 'تصفیه',          to: '/admin/settlement',    icon: <FileText size={16} /> },
   { label: 'لیست معاملات',    to: '/admin/trades',        icon: <BarChart2 size={16} /> },
   { label: 'ثبت دستی معامله', to: '/admin/manual-trade',  icon: <PlusCircle size={16} /> },
+  { label: 'تعطیلات بازار',    to: '/admin/holidays',      icon: <CalendarOff size={16} /> },
   { label: 'پروفایل من',      to: '/admin/profile',       icon: <User size={16} /> },
 ];
 

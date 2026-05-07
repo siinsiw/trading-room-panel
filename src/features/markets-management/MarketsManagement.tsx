@@ -26,6 +26,8 @@ interface MarketFormData {
   parry_threshold: string;
   margin_warn_pct: string;
   margin_liquidate_pct: string;
+  // Migration 0007 — تلرانس حراج
+  liquidation_tolerance_toman: string;
 }
 
 const defaultForm: MarketFormData = {
@@ -42,7 +44,23 @@ const defaultForm: MarketFormData = {
   parry_threshold: '5000',
   margin_warn_pct: '75',
   margin_liquidate_pct: '85',
+  liquidation_tolerance_toman: '200',
 };
+
+// در ساعت کاری بازار (۹ تا ۱۳:۳۰ به وقت تهران) تعویض mode باید با هشدار همراه باشد.
+function isMarketOpenNow(): boolean {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Tehran',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(new Date());
+  const h = parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0', 10);
+  const m = parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0', 10);
+  const minutes = h * 60 + m;
+  return minutes >= 9 * 60 && minutes <= 13 * 60 + 30;
+}
 
 interface MarketModalProps {
   market?: Market;
@@ -67,10 +85,14 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
           parry_threshold: String(market.parryThreshold ?? 5000),
           margin_warn_pct: String(market.marginWarnPct ?? 75),
           margin_liquidate_pct: String(market.marginLiquidatePct ?? 85),
+          liquidation_tolerance_toman: String(market.liquidationToleranceToman ?? 200),
         }
       : defaultForm,
   );
   const [loading, setLoading] = useState(false);
+  const initialMode = market?.mode ?? 'margin';
+  const modeChangedDuringMarket =
+    !!market && form.mode !== initialMode && isMarketOpenNow();
 
   function setField(k: keyof MarketFormData, v: string | boolean) {
     setForm((prev) => ({ ...prev, [k]: v }));
@@ -82,12 +104,26 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
       toast.error('فیلدهای اجباری را پر کنید');
       return;
     }
+    if (modeChangedDuringMarket) {
+      const ok = window.confirm(
+        'بازار در ساعت کاری است (۹ تا ۱۳:۳۰). تغییر mode وسط روز توصیه نمی‌شود — لطفاً فقط بین تصفیه‌ها mode را عوض کنید.\n\nآیا مطمئنید می‌خواهید ادامه دهید؟',
+      );
+      if (!ok) return;
+    }
+
     setLoading(true);
     try {
       const warnPct = parseInt(form.margin_warn_pct, 10);
       const liqPct = parseInt(form.margin_liquidate_pct, 10);
       if (form.mode === 'margin' && warnPct >= liqPct) {
         toast.error('آستانهٔ هشدار باید کوچکتر از آستانهٔ حراج باشد');
+        setLoading(false);
+        return;
+      }
+      const tolerance = parseInt(form.liquidation_tolerance_toman, 10);
+      if (Number.isNaN(tolerance) || tolerance < 0) {
+        toast.error('تلرانس حراج باید عدد صحیح غیرمنفی باشد');
+        setLoading(false);
         return;
       }
 
@@ -105,6 +141,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
         parryThreshold: form.mode === 'parry' ? parseInt(form.parry_threshold, 10) : undefined,
         marginWarnPct: warnPct,
         marginLiquidatePct: liqPct,
+        liquidationToleranceToman: tolerance,
       };
 
       if (market) {
@@ -239,6 +276,42 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                 </p>
               </div>
             )}
+
+            {modeChangedDuringMarket && (
+              <div
+                className="mt-3 rounded-md border-r-4 px-3 py-2 text-xs"
+                style={{
+                  borderRightColor: 'var(--semantic-warn)',
+                  backgroundColor: 'color-mix(in srgb, var(--semantic-warn) 10%, transparent)',
+                  color: 'var(--semantic-warn)',
+                }}
+              >
+                ⚠️ بازار در ساعت کاری است (۹ تا ۱۳:۳۰). تعویض mode فقط بین تصفیه‌ها مجاز است.
+              </div>
+            )}
+          </div>
+
+          {/* ─── تلرانس قیمت حراج (مهاجرت 0007) ───────────── */}
+          <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+            <label className="mb-1 block text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              تلرانس قیمت حراج (تومن)
+            </label>
+            <input
+              type="number"
+              min={0}
+              value={form.liquidation_tolerance_toman}
+              onChange={(e) => setField('liquidation_tolerance_toman', e.target.value)}
+              placeholder="200"
+              className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
+              style={{
+                borderColor: 'var(--border-strong)',
+                color: 'var(--text-primary)',
+                fontFamily: "'Geist Mono', monospace",
+              }}
+            />
+            <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              وقتی بات کاربری را حراج می‌کند، لفظ حراج را با این آفست از قیمت محاسبه‌شده می‌گذارد تا سریع پر شود.
+            </p>
           </div>
 
           {/* Active toggle */}
@@ -366,7 +439,7 @@ export default function MarketsManagement() {
             <table className="w-full text-sm" style={{ borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {['نام', 'نماد', 'مزنه', 'مدل', 'بازه لفظ', 'وزن', 'وضعیت', 'عملیات'].map((h) => (
+                  {['نام', 'نماد', 'مزنه', 'مدل', 'تلرانس حراج', 'بازه لفظ', 'وزن', 'وضعیت', 'عملیات'].map((h) => (
                     <th key={h} className="px-4 py-3 text-xs font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                       {h}
                     </th>
@@ -427,6 +500,12 @@ export default function MarketsManagement() {
                           🔁 مارجین ({toFa(m.marginWarnPct ?? 75)}/{toFa(m.marginLiquidatePct ?? 85)})
                         </span>
                       )}
+                    </td>
+                    <td
+                      className="px-4 py-3 text-xs tabular-nums"
+                      style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}
+                    >
+                      {formatTomans(m.liquidationToleranceToman ?? 200)}
                     </td>
                     <td className="px-4 py-3 text-xs" style={{ color: 'var(--text-secondary)' }}>
                       {toFa(m.lafzMin)}–{toFa(m.lafzMax)}
