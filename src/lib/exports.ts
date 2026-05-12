@@ -165,7 +165,7 @@ export function printPdfReport(args: {
     <thead><tr>${headerCells}</tr></thead>
     <tbody>${bodyRows}${summary}</tbody>
   </table>
-  <p class="footer">تولید‌شده توسط پنل اتاق معاملات شمس‌العماره · ${new Date().toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' })}</p>
+  <p class="footer">تولید‌شده توسط پنل اتاق معاملات تی‌تی · ${new Date().toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' })}</p>
   <script>
     window.addEventListener('load', () => { setTimeout(() => window.print(), 200); });
   </script>

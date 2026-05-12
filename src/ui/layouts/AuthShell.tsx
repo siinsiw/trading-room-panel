@@ -50,7 +50,7 @@ export function AuthShell() {
           className="mt-1 text-sm font-bold"
           style={{ color: 'var(--accent-gold)' }}
         >
-          شمس‌العماره
+          تی‌تی
         </p>
       </div>
 

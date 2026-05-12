@@ -136,7 +136,7 @@ export function DesktopShell() {
                 className="mt-0.5 text-sm font-bold truncate"
                 style={{ color: 'var(--accent-gold)' }}
               >
-                شمس‌العماره
+                تی‌تی
               </p>
             </div>
           )}
