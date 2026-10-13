@@ -121,7 +121,7 @@ export default function MyProfilePage() {
             onClick={() => void saveProfile()}
             disabled={!dirty || savingProfile}
             className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50"
-            style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+            style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
           >
             <Save size={14} />
             {savingProfile ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
@@ -152,7 +152,7 @@ export default function MyProfilePage() {
             onClick={() => void changePassword()}
             disabled={!pwd1 || !pwd2 || savingPwd}
             className="flex items-center gap-1.5 rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-50"
-            style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+            style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
           >
             <Lock size={14} />
             {savingPwd ? 'در حال ذخیره…' : 'ذخیره رمز جدید'}
@@ -189,7 +189,7 @@ export default function MyProfilePage() {
 
               <span style={{ color: 'var(--text-tertiary)' }}>کمیسیون هر واحد</span>
               <span className="tabular-nums" style={{ color: 'var(--text-primary)' }}>
-                {profile.commission_per_unit != null ? toFa(profile.commission_per_unit.toLocaleString('en-US')) + ' تومان' : '—'}
+                {profile.commission_per_unit != null ? toFa(Number(profile.commission_per_unit).toFixed(2)) + ' تتر' : '—'}
               </span>
             </>
           )}

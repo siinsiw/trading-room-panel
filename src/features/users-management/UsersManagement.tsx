@@ -78,8 +78,8 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -123,7 +123,7 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
           </p>
         )}
         <div className="mt-5 flex gap-3">
-          <button type="button" onClick={onClose} className="flex-1 rounded-lg py-2 text-sm hover:bg-white/5" style={{ color: 'var(--text-secondary)' }}>
+          <button type="button" onClick={onClose} className="flex-1 rounded-lg py-2 text-sm hover:bg-[var(--surface-tint)]" style={{ color: 'var(--text-secondary)' }}>
             انصراف
           </button>
           <button
@@ -131,7 +131,7 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
             onClick={() => void handleApprove()}
             disabled={loading}
             className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
-            style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
+            style={{ backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)' }}
           >
             {loading ? 'در حال ثبت...' : 'تأیید'}
           </button>
@@ -220,8 +220,8 @@ function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={() => { if (!done) onClose(); }}
     >
       <div
@@ -247,7 +247,7 @@ function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
               type="button"
               onClick={onClose}
               className="w-full rounded-lg py-2 text-sm font-bold"
-              style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+              style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
             >
               بستن
             </button>
@@ -295,7 +295,7 @@ function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
               </div>
             </div>
             <div className="mt-5 flex gap-3">
-              <button type="button" onClick={onClose} className="flex-1 rounded-lg py-2 text-sm hover:bg-white/5" style={{ color: 'var(--text-secondary)' }}>
+              <button type="button" onClick={onClose} className="flex-1 rounded-lg py-2 text-sm hover:bg-[var(--surface-tint)]" style={{ color: 'var(--text-secondary)' }}>
                 انصراف
               </button>
               <button
@@ -303,7 +303,7 @@ function NewUserModal({ onClose, onCreated }: NewUserModalProps) {
                 onClick={() => void handleCreate()}
                 disabled={loading}
                 className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
-                style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+                style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
               >
                 {loading ? 'در حال ساخت...' : 'ایجاد'}
               </button>
@@ -415,7 +415,7 @@ export default function UsersManagement() {
     { key: 'active', header: 'وضعیت', format: (p) => p.active ? 'فعال' : 'غیرفعال' },
     { key: 'deposit_tether', header: 'ودیعه (تتر)', format: (p) => p.deposit_tether ?? '' },
     { key: 'per_unit_deposit', header: 'بیعانه هر واحد', format: (p) => p.per_unit_deposit ?? '' },
-    { key: 'commission_per_unit', header: 'کمیسیون هر واحد (تومان)', format: (p) => p.commission_per_unit ?? '' },
+    { key: 'commission_per_unit', header: 'کمیسیون هر واحد (USDT)', format: (p) => p.commission_per_unit ?? '' },
     { key: 'max_open_units', header: 'سقف موقعیت باز', format: (p) => p.max_open_units ?? '' },
     { key: 'is_credit_user', header: 'نوع حساب', format: (p) => p.is_credit_user ? 'اعتباری' : 'ودیعه‌ای' },
     { key: 'credit_units', header: 'واحد اعتبار', format: (p) => p.credit_units ?? '' },
@@ -437,19 +437,19 @@ export default function UsersManagement() {
               type="button"
               onClick={() => setShowBulk(true)}
               className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors"
-              style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+              style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
             >
               <UsersIcon size={16} />
               ویرایش گروهی ({toFa(selectedCount)})
             </button>
           )}
-          <button type="button" onClick={onExportCSV}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
-          <button type="button" onClick={onExportExcel} disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button type="button" onClick={onExportCSV}   disabled={filtered.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExportExcel} disabled={filtered.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
           <button
             type="button"
             onClick={() => setShowNewUser(true)}
             className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold hover:opacity-80 transition-opacity"
-            style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+            style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
           >
             <UserPlus size={16} />
             کاربر جدید
@@ -551,7 +551,7 @@ export default function UsersManagement() {
                       type="button"
                       onClick={() => setApproveTarget(p)}
                       className="flex-1 rounded-lg py-1.5 text-xs font-bold hover:opacity-80"
-                      style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
+                      style={{ backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)' }}
                     >
                       تأیید
                     </button>
@@ -616,7 +616,7 @@ export default function UsersManagement() {
                       {filtered.map((p) => (
                         <tr
                           key={p.id}
-                          className="border-t transition-colors hover:bg-white/5"
+                          className="border-t transition-colors hover:bg-[var(--surface-tint)]"
                           style={{ borderColor: 'var(--border-subtle)' }}
                         >
                           <td className="px-3 py-3" style={{ textAlign: 'right' }}>
@@ -675,7 +675,7 @@ export default function UsersManagement() {
                                 type="button"
                                 onClick={() => setEditTarget(p)}
                                 title="ویرایش"
-                                className="rounded p-1.5 hover:bg-white/10 transition-colors"
+                                className="rounded p-1.5 hover:bg-[var(--surface-tint-strong)] transition-colors"
                                 style={{ color: 'var(--text-secondary)' }}
                               >
                                 <Pencil size={14} />
@@ -685,7 +685,7 @@ export default function UsersManagement() {
                                   type="button"
                                   onClick={() => setApproveTarget(p)}
                                   className="rounded px-2 py-1 text-xs font-medium hover:opacity-80"
-                                  style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
+                                  style={{ backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)' }}
                                 >
                                   تأیید
                                 </button>

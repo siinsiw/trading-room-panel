@@ -78,7 +78,7 @@ export function applyFinalSettlement(input: FinalSettlementInput): FinalSettleme
     snapshotBefore: JSON.stringify(snapshotAfter),
     totalTradesCount: relevantTrades.length,
     totalVolumeUnits: relevantTrades.reduce((s, t) => s + t.quantity, 0),
-    totalCommissionToman: updatedTrades.reduce(
+    totalCommissionTether: updatedTrades.reduce(
       (s, t) => s + (t.buyerCommission ?? 0) + (t.sellerCommission ?? 0),
       0
     ),

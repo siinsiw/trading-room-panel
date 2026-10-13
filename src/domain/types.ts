@@ -31,7 +31,16 @@ export interface Market {
   // Migration 0007 (گودرزی dor 2)
   liquidationToleranceToman?: Toman;  // پیش‌فرض ۲۰۰ — تلرانس قیمت حراج بات
   parrySettlementPrice?: Toman;       // عدد تصفیهٔ آخر (برای محاسبهٔ پری)
+  // Migration 0010 — قرارداد قیمت لفظ نسبی
+  //   offset: مزنه + لفظ×مقیاس (طلا)
+  //   last3 : جایگزینی سه رقم آخر نرخ جاری (دلار — قرارداد «موج تهران»)
+  lafzPriceMode?: LafzPriceMode;
+  /** کف و سقف حجم هر لفظ (واحد) — مایگریشن ۰۰۱۲ */
+  minQty?: number;
+  maxQty?: number;
 }
+
+export type LafzPriceMode = 'offset' | 'last3';
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 export interface User {
@@ -151,7 +160,7 @@ export interface Settlement {
   snapshotBefore: string;         // JSON of SettlementSnapshot[]
   totalTradesCount: number;
   totalVolumeUnits: number;
-  totalCommissionToman: Toman;
+  totalCommissionTether: Tether;
 }
 
 // ─── Audit ────────────────────────────────────────────────────────────────────

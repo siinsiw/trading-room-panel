@@ -19,7 +19,7 @@ function NotificationItem({
     <div
       className={cn(
         'relative flex flex-col gap-1 px-4 py-3 transition-colors',
-        'hover:bg-white/5',
+        'hover:bg-[var(--surface-tint)]',
         !notification.read && 'border-r-2',
       )}
       style={
@@ -77,7 +77,7 @@ export function NotificationBell() {
           type="button"
           className={cn(
             'relative flex h-9 w-9 items-center justify-center rounded-lg',
-            'transition-colors duration-150 hover:bg-white/10',
+            'transition-colors duration-150 hover:bg-[var(--surface-tint-strong)]',
           )}
           aria-label={`اعلان‌ها${unreadCount > 0 ? ` — ${toFa(unreadCount)} خوانده‌نشده` : ''}`}
           style={{ color: 'var(--text-secondary)' }}
@@ -93,7 +93,7 @@ export function NotificationBell() {
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 20 }}
-                className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-white"
+                className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold text-[var(--bg-elevated)]"
                 style={{ backgroundColor: 'var(--semantic-danger)' }}
                 aria-hidden="true"
               >

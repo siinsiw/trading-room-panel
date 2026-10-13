@@ -3,9 +3,33 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>اتاق معاملات</title>
     <meta name="theme-color" content="#08080C" />
+    <script>
+      // تم را قبل از اولین رنگ‌آمیزی ست می‌کند تا صفحه با تم اشتباه فلاش نزند.
+      // منطق دقیقاً همان readInitialMode در stores/theme.store.ts است.
+      (function () {
+        try {
+          var q = new URLSearchParams(location.search).get('theme');
+          var m = q === 'light' || q === 'dark' ? q : localStorage.getItem('tt.theme');
+          if (m === 'light' || m === 'dark') {
+            document.documentElement.setAttribute('data-theme', m);
+          } else if (m !== 'system') {
+            document.documentElement.setAttribute('data-theme', 'dark');
+          }
+          var light =
+            document.documentElement.getAttribute('data-theme') === 'light' ||
+            (!document.documentElement.hasAttribute('data-theme') &&
+              matchMedia('(prefers-color-scheme: light)').matches);
+          document
+            .querySelector('meta[name="theme-color"]')
+            .setAttribute('content', light ? '#F6F4EF' : '#08080C');
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

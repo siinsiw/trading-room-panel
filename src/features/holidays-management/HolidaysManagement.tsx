@@ -127,7 +127,7 @@ export default function HolidaysManagement() {
           type="button"
           onClick={() => setShowAdd(true)}
           className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
         >
           <CalendarPlus size={16} />
           افزودن روز تعطیل
@@ -166,7 +166,7 @@ export default function HolidaysManagement() {
               {holidays.map((hol) => (
                 <tr
                   key={hol.date}
-                  className="border-t hover:bg-white/5"
+                  className="border-t hover:bg-[var(--surface-tint)]"
                   style={{ borderColor: 'var(--border-subtle)' }}
                 >
                   <td
@@ -196,7 +196,7 @@ export default function HolidaysManagement() {
                         type="button"
                         onClick={() => setShiftDate(hol.date)}
                         title="انتقال لفظ‌ها و معاملات این تاریخ به روز کاری بعد"
-                        className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-white/10"
+                        className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-[var(--surface-tint-strong)]"
                         style={{ color: 'var(--accent-gold)' }}
                       >
                         <ArrowLeftRight size={13} />
@@ -205,7 +205,7 @@ export default function HolidaysManagement() {
                       <button
                         type="button"
                         onClick={() => setDeleteDate(hol.date)}
-                        className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-white/10"
+                        className="flex items-center gap-1 rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-[var(--surface-tint-strong)]"
                         style={{ color: 'var(--semantic-danger)' }}
                       >
                         <Trash2 size={13} />
@@ -223,8 +223,8 @@ export default function HolidaysManagement() {
       {/* Add modal */}
       {showAdd && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+          className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+          style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
           onClick={() => setShowAdd(false)}
         >
           <div
@@ -277,7 +277,7 @@ export default function HolidaysManagement() {
               <button
                 type="button"
                 onClick={() => setShowAdd(false)}
-                className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5"
+                className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-[var(--surface-tint)]"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 انصراف
@@ -287,7 +287,7 @@ export default function HolidaysManagement() {
                 onClick={() => void handleAdd()}
                 disabled={saving}
                 className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
-                style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+                style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
               >
                 {saving ? 'در حال ذخیره...' : 'افزودن'}
               </button>

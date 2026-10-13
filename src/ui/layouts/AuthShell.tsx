@@ -1,5 +1,7 @@
 import { Outlet } from 'react-router-dom';
-import { Logo, LOGIN_BG_URL } from '@/ui/compounds/Logo';
+import { Logo } from '@/ui/compounds/Logo';
+import { LOGIN_BG_URL } from '@/ui/compounds/brand';
+import { ThemeToggle } from '@/ui/compounds/ThemeToggle';
 
 export function AuthShell() {
   return (
@@ -7,26 +9,37 @@ export function AuthShell() {
       className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4"
       style={{
         backgroundColor: 'var(--bg-base)',
-        backgroundImage: `url(${LOGIN_BG_URL})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        // بدون VITE_LOGIN_BG_URL اصلاً backgroundImage ست نمی‌شود؛
+        // `url()` خالی در بعضی مرورگرها یک درخواست بی‌مورد می‌سازد.
+        ...(LOGIN_BG_URL && {
+          backgroundImage: `url(${LOGIN_BG_URL})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }),
       }}
     >
-      {/* تیره‌سازی برای خوانایی فرم روی پس‌زمینه */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ backgroundColor: 'rgba(0,0,0,0.55)' }}
-      />
+      {/* تیره‌سازی برای خوانایی فرم روی پس‌زمینه — بدون تصویر لازم نیست */}
+      {LOGIN_BG_URL && (
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{ backgroundColor: 'var(--auth-scrim)' }}
+        />
+      )}
 
       {/* نور طلایی روی بالا */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            'radial-gradient(ellipse 60% 40% at 50% 0%, rgba(212,162,76,0.18) 0%, transparent 70%)',
+            'radial-gradient(ellipse 60% 40% at 50% 0%, color-mix(in srgb, var(--accent-surface) 18%, transparent) 0%, transparent 70%)',
         }}
       />
+
+      {/* تغییر تم — گوشهٔ بالا */}
+      <div className="absolute left-4 top-4 z-20">
+        <ThemeToggle />
+      </div>
 
       {/* لوگو */}
       <div className="mb-8 text-center z-10">
@@ -34,7 +47,7 @@ export function AuthShell() {
           className="w-16 h-16 rounded-2xl mx-auto mb-3 overflow-hidden shadow-lg ring-1"
           style={{
             backgroundColor: 'var(--bg-elevated)',
-            boxShadow: '0 4px 24px rgba(212,162,76,0.25)',
+            boxShadow: '0 4px 24px color-mix(in srgb, var(--accent-surface) 25%, transparent)',
             ['--tw-ring-color' as string]: 'var(--border-strong)',
           }}
         >

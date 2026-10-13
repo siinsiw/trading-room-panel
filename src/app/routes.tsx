@@ -9,11 +9,11 @@ const RoleSelect = lazy(() => import('@/features/role-select/RoleSelect'));
 
 // Auth
 const LoginPage           = lazy(() => import('@/features/auth/LoginPage'));
-const SignupPage          = lazy(() => import('@/features/auth/SignupPage'));
 const ForgotPasswordPage  = lazy(() => import('@/features/auth/ForgotPasswordPage'));
 const ResetPasswordPage   = lazy(() => import('@/features/auth/ResetPasswordPage'));
 const VerifyEmailPage     = lazy(() => import('@/features/auth/VerifyEmailPage'));
 const PendingApprovalPage = lazy(() => import('@/features/auth/PendingApprovalPage'));
+const TelegramOnlyPage    = lazy(() => import('@/features/auth/TelegramOnlyPage'));
 
 // Admin
 const AdminDashboard    = lazy(() => import('@/features/admin-dashboard/AdminDashboard'));
@@ -23,12 +23,8 @@ const SettlementControl = lazy(() => import('@/features/settlement-control/Settl
 const AdminTradesList   = lazy(() => import('@/features/trades-list/TradesList'));
 const ManualTradeEntry  = lazy(() => import('@/features/manual-trade/ManualTradeEntry'));
 const HolidaysManagement = lazy(() => import('@/features/holidays-management/HolidaysManagement'));
-
-// Trader
-const TraderOrderbook = lazy(() => import('@/features/trader-orderbook/TraderOrderbook'));
-const TraderOrders    = lazy(() => import('@/features/trader-orders/TraderOrders'));
-const TraderHistory   = lazy(() => import('@/features/trader-history/TraderHistory'));
-const TraderProfile   = lazy(() => import('@/features/trader-profile/TraderProfile'));
+const RoomSettings      = lazy(() => import('@/features/room-settings/RoomSettings'));
+const Registrations     = lazy(() => import('@/features/registrations/RegistrationsManagement'));
 
 // Accountant
 const AccountantReports     = lazy(() => import('@/features/accountant-reports/AccountantReports'));
@@ -55,11 +51,12 @@ export const routes: RouteObject[] = [
     element: <AuthShell />,
     children: [
       { path: '/auth/login',            element: <Wrap><LoginPage /></Wrap> },
-      { path: '/auth/signup',           element: <Wrap><SignupPage /></Wrap> },
       { path: '/auth/forgot-password',  element: <Wrap><ForgotPasswordPage /></Wrap> },
       { path: '/auth/reset-password',   element: <Wrap><ResetPasswordPage /></Wrap> },
       { path: '/auth/verify-email',     element: <Wrap><VerifyEmailPage /></Wrap> },
       { path: '/auth/pending-approval', element: <Wrap><PendingApprovalPage /></Wrap> },
+      // معامله‌گر اگر به هر دلیلی وارد شود، اینجا می‌رسد و نشستش بسته می‌شود
+      { path: '/auth/telegram-only',    element: <Wrap><TelegramOnlyPage /></Wrap> },
     ],
   },
 
@@ -84,21 +81,16 @@ export const routes: RouteObject[] = [
               { path: '/admin/trades',        element: <Wrap><AdminTradesList /></Wrap> },
               { path: '/admin/manual-trade',  element: <Wrap><ManualTradeEntry /></Wrap> },
               { path: '/admin/holidays',      element: <Wrap><HolidaysManagement /></Wrap> },
+              { path: '/admin/registrations', element: <Wrap><Registrations /></Wrap> },
+              { path: '/admin/settings',      element: <Wrap><RoomSettings /></Wrap> },
               { path: '/admin/profile',       element: <Wrap><MyProfilePage /></Wrap> },
             ],
           },
 
-          // Trader only
-          {
-            element: <RoleGuard roles={['trader']} />,
-            children: [
-              { path: '/trader/orderbook', element: <Wrap><TraderOrderbook /></Wrap> },
-              { path: '/trader/orders',    element: <Wrap><TraderOrders /></Wrap> },
-              { path: '/trader/history',   element: <Wrap><TraderHistory /></Wrap> },
-              { path: '/trader/profile',   element: <Wrap><TraderProfile /></Wrap> },
-              { path: '/trader/account',   element: <Wrap><MyProfilePage /></Wrap> },
-            ],
-          },
+          // مسیرهای معامله‌گر از پنل برداشته شدند (۲۰۲۶-۰۹-۲۲).
+          // معامله فقط در گروه تلگرام انجام می‌شود و پنل داشبورد
+          // مدیریتی است. فایل‌های features/trader-* روی دیسک مانده‌اند
+          // ولی به هیچ مسیری وصل نیستند.
 
           // Accountant only
           {

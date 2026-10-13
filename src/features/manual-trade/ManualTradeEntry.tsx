@@ -158,7 +158,7 @@ export default function ManualTradeEntry() {
                 )}
                 style={
                   tradeType === opt.id
-                    ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' }
+                    ? { backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-surface)' }
                     : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }
                 }
               >
@@ -354,7 +354,7 @@ export default function ManualTradeEntry() {
           onClick={() => void handleSubmit()}
           disabled={submitting}
           className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-50 transition-opacity hover:opacity-90"
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
         >
           {submitting ? 'در حال ثبت…' : 'ثبت معامله'}
         </button>

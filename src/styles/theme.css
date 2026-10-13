@@ -1,23 +1,65 @@
-:root {
-  --bg-base: #08080C;
-  --bg-elevated: #13131A;
-  --bg-overlay: #1C1C26;
+/* ═══════════════════════════════════════════════════════════════
+   توکن‌های رنگ — دو تم: تیره (پیش‌فرض) و روشن
+
+   قاعده: هیچ کامپوننتی رنگ خام ننویسد. هر رنگی که در UI دیده می‌شود
+   باید یکی از این متغیرها باشد، وگرنه در تم دیگر می‌شکند.
+
+   تفکیک مهم:
+     --accent-gold      رنگ طلایی برای «متن و آیکون» — در تم روشن
+                        تیره‌تر می‌شود تا روی کاغذ خوانا بماند
+     --accent-surface   سطح پرشدهٔ برند (دکمهٔ اصلی) — در هر دو تم
+                        طلایی روشن می‌ماند و متنش تیره است
+     --accent-wash      تینت بسیار ملایم برند برای نوارها و سربرگ‌ها —
+                        متن روی آن همان --text-primary است، نه on-accent
+   ═══════════════════════════════════════════════════════════════ */
+
+:root,
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* سطوح */
+  --bg-base:      #08080C;
+  --bg-elevated:  #13131A;
+  --bg-overlay:   #1C1C26;
   --border-subtle: #22222C;
   --border-strong: #2E2E3C;
 
-  --text-primary: #F5F4EE;
+  /* تینت شفاف روی سطوح — جایگزین bg-white/5 و bg-white/10 */
+  --surface-tint:        rgba(255, 255, 255, 0.05);
+  --surface-tint-strong: rgba(255, 255, 255, 0.10);
+
+  /* متن */
+  --text-primary:   #F5F4EE;
   --text-secondary: #8B8B95;
-  --text-tertiary: #565660;
+  --text-tertiary:  #767682;
+  /* متنی که روی سطح برند می‌نشیند */
+  --text-on-accent: #0B0A06;
 
-  --accent-gold: #D4A24C;
+  /* برند */
+  --accent-gold:        #D4A24C;
   --accent-gold-bright: #F2BD68;
-  --accent-gold-dim: #6E5226;
+  --accent-gold-dim:    #6E5226;
+  --accent-surface:     #D4A24C;
+  --accent-wash:        rgba(212, 162, 76, 0.08);
 
-  --semantic-buy: #2DD4BF;
-  --semantic-sell: #FB7185;
-  --semantic-warn: #FB923C;
-  --semantic-danger: #EF4444;
+  /* معنایی */
+  --semantic-buy:     #2DD4BF;
+  --semantic-sell:    #FB7185;
+  --semantic-warn:    #FB923C;
+  --semantic-danger:  #EF4444;
   --semantic-success: #22C55E;
+
+  /* پردهٔ روی عکس پس‌زمینهٔ صفحهٔ ورود */
+  --auth-scrim: rgba(0, 0, 0, 0.55);
+
+  /* پردهٔ پشت مودال و کشو — کارش تیره‌کردن صفحه است، پس در هر دو تم
+     تیره می‌ماند؛ فقط در تم روشن سبک‌تر تا کاغذ زیرش حس شود. */
+  --modal-scrim: rgba(0, 0, 0, 0.70);
+
+  /* سایه — در تم تیره تقریباً نامرئی است، در روشن کار می‌کند */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
 
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -25,3 +67,100 @@
 
   --transition-default: 200ms cubic-bezier(0.65, 0, 0.35, 1);
 }
+
+/* ─── تم روشن ────────────────────────────────────────────────────
+   کاغذ گرم، نه سفید خالص. طلایی برای متن تیره می‌شود (‎#D4A24C روی
+   سفید نسبت کنتراست ۱.۹ دارد و عملاً خوانا نیست). رنگ‌های معنایی هم
+   یک پله تیره‌تر می‌شوند تا روی پس‌زمینهٔ روشن دیده شوند. */
+[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-base:      #F6F4EF;
+  --bg-elevated:  #FFFFFF;
+  --bg-overlay:   #F2F0E8;
+  --border-subtle: #DCD7C9;
+  --border-strong: #C9C4B6;
+
+  --surface-tint:        rgba(24, 22, 15, 0.045);
+  --surface-tint-strong: rgba(24, 22, 15, 0.085);
+
+  --text-primary:   #17150F;
+  --text-secondary: #5C584C;
+  --text-tertiary:  #78725F;
+  --text-on-accent: #17150F;
+
+  --accent-gold:        #8A6114;
+  --accent-gold-bright: #A8781F;
+  --accent-gold-dim:    #E8DCBE;
+  --accent-surface:     #E0AE4F;
+  --accent-wash:        rgba(138, 97, 20, 0.055);
+
+  --semantic-buy:     #0D8B7D;
+  --semantic-sell:    #D6295A;
+  --semantic-warn:    #C2540A;
+  --semantic-danger:  #C62222;
+  --semantic-success: #15803D;
+
+  --auth-scrim: rgba(246, 244, 239, 0.72);
+  --modal-scrim: rgba(24, 22, 15, 0.42);
+
+  --shadow-sm: 0 1px 2px rgba(24, 22, 15, 0.06);
+  --shadow-md: 0 4px 16px rgba(24, 22, 15, 0.08);
+  --shadow-lg: 0 12px 40px rgba(24, 22, 15, 0.12);
+}
+
+/* اگر کاربر تمی انتخاب نکرده و سیستمش روشن است — تا وقتی
+   data-theme صریحاً ست نشده باشد. */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme='dark']):not([data-theme='light']) {
+    color-scheme: light;
+
+    --bg-base:      #F6F4EF;
+    --bg-elevated:  #FFFFFF;
+    --bg-overlay:   #F2F0E8;
+    --border-subtle: #DCD7C9;
+    --border-strong: #C9C4B6;
+
+    --surface-tint:        rgba(24, 22, 15, 0.045);
+    --surface-tint-strong: rgba(24, 22, 15, 0.085);
+
+    --text-primary:   #17150F;
+    --text-secondary: #5C584C;
+    --text-tertiary:  #78725F;
+    --text-on-accent: #17150F;
+
+    --accent-gold:        #8A6114;
+    --accent-gold-bright: #A8781F;
+    --accent-gold-dim:    #E8DCBE;
+    --accent-surface:     #E0AE4F;
+  --accent-wash:        rgba(138, 97, 20, 0.055);
+
+    --semantic-buy:     #0D8B7D;
+    --semantic-sell:    #D6295A;
+    --semantic-warn:    #C2540A;
+    --semantic-danger:  #C62222;
+    --semantic-success: #15803D;
+
+    --auth-scrim: rgba(246, 244, 239, 0.72);
+    --modal-scrim: rgba(24, 22, 15, 0.42);
+  --modal-scrim: rgba(24, 22, 15, 0.42);
+
+    --shadow-sm: 0 1px 2px rgba(24, 22, 15, 0.06);
+    --shadow-md: 0 4px 16px rgba(24, 22, 15, 0.08);
+    --shadow-lg: 0 12px 40px rgba(24, 22, 15, 0.12);
+  }
+}
+
+/* ─── مقیاس z-index ──────────────────────────────────────────────
+   عددها را حدسی نگذارید؛ از همین جدول بردارید.
+
+     40   منوی بازشو و popover محلی
+     50   نوار پایین موبایل (کروم دائمی صفحه)
+     55   پردهٔ شیت پایینی
+     60   پنل شیت پایینی
+     70   مودال و کشوی صفحه، همراه پرده‌اش
+    100   بنر آفلاین — همیشه بالای همه
+
+   نکتهٔ تاریخی: مودال‌ها z-50 بودند، دقیقاً هم‌ارتفاع نوار پایین، و چون
+   <nav> بعد از <main> در DOM است روی مودال می‌نشست و ۶۴ پیکسل پایین آن
+   روی موبایل غیرقابل‌لمس می‌شد. */

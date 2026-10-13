@@ -103,7 +103,7 @@ export default function AccountantUsers() {
                 {filtered.map((p) => (
                   <tr
                     key={p.id}
-                    className="border-t transition-colors hover:bg-white/5"
+                    className="border-t transition-colors hover:bg-[var(--surface-tint)]"
                     style={{ borderColor: 'var(--border-subtle)' }}
                   >
                     <td className="px-4 py-3">

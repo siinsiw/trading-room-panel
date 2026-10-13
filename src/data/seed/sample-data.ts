@@ -126,7 +126,7 @@ export function generateSampleData() {
     ),
     totalTradesCount: 8,
     totalVolumeUnits: 10,
-    totalCommissionToman: 800_000,
+    totalCommissionTether: 16,
   };
 
   // ─── Audit entries ────────────────────────────────────────────────────────────

@@ -28,6 +28,11 @@ interface MarketFormData {
   margin_liquidate_pct: string;
   // Migration 0007 — تلرانس حراج
   liquidation_tolerance_toman: string;
+  // Migration 0010 — قرارداد قیمت لفظ نسبی
+  lafz_price_mode: 'offset' | 'last3';
+  // Migration 0012 — کف و سقف حجم هر لفظ
+  min_qty: string;
+  max_qty: string;
 }
 
 const defaultForm: MarketFormData = {
@@ -45,6 +50,9 @@ const defaultForm: MarketFormData = {
   margin_warn_pct: '75',
   margin_liquidate_pct: '85',
   liquidation_tolerance_toman: '200',
+  lafz_price_mode: 'offset',
+  min_qty: '1',
+  max_qty: '30',
 };
 
 // در ساعت کاری بازار (۹ تا ۱۳:۳۰ به وقت تهران) تعویض mode باید با هشدار همراه باشد.
@@ -86,6 +94,9 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
           margin_warn_pct: String(market.marginWarnPct ?? 75),
           margin_liquidate_pct: String(market.marginLiquidatePct ?? 85),
           liquidation_tolerance_toman: String(market.liquidationToleranceToman ?? 200),
+          lafz_price_mode: market.lafzPriceMode ?? 'offset',
+          min_qty: String(market.minQty ?? 1),
+          max_qty: String(market.maxQty ?? 30),
         }
       : defaultForm,
   );
@@ -139,6 +150,9 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
         active: form.active,
         mode: form.mode,
         parryThreshold: form.mode === 'parry' ? parseInt(form.parry_threshold, 10) : undefined,
+        lafzPriceMode: form.lafz_price_mode,
+        minQty: parseInt(form.min_qty, 10) || 1,
+        maxQty: parseInt(form.max_qty, 10) || 30,
         marginWarnPct: warnPct,
         marginLiquidatePct: liqPct,
         liquidationToleranceToman: tolerance,
@@ -169,12 +183,14 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
     { label: 'حداکثر لفظ', key: 'lafz_max', type: 'number', placeholder: '999' },
     { label: 'ضریب لفظ (تومان)', key: 'lafz_scale', type: 'number', placeholder: '1000' },
     { label: 'مزنه فعلی', key: 'mazne_current', type: 'number', placeholder: '4500000' },
+    { label: 'کف حجم هر لفظ (واحد)', key: 'min_qty', type: 'number', placeholder: '1' },
+    { label: 'سقف حجم هر لفظ (واحد)', key: 'max_qty', type: 'number', placeholder: '30' },
   ];
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4 overflow-y-auto"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -201,6 +217,59 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                 />
               </div>
             ))}
+          </div>
+
+          {/* ─── قرارداد قیمت لفظ ───────────────────────────── */}
+          <div className="rounded-lg border p-3" style={{ borderColor: 'var(--border-subtle)' }}>
+            <p className="mb-2 text-xs font-semibold" style={{ color: 'var(--text-secondary)' }}>
+              قرارداد قیمت لفظ
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              {(['offset', 'last3'] as const).map((pm) => (
+                <button
+                  key={pm}
+                  type="button"
+                  onClick={() => setField('lafz_price_mode', pm)}
+                  className="min-h-11 rounded-lg border py-2 text-xs font-medium transition-colors"
+                  style={
+                    form.lafz_price_mode === pm
+                      ? { borderColor: 'var(--accent-gold)', color: 'var(--accent-gold)', backgroundColor: 'color-mix(in srgb, var(--accent-gold) 10%, transparent)' }
+                      : { borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }
+                  }
+                >
+                  {pm === 'offset' ? '➕ آفست از مزنه' : '🔢 سه رقم آخر'}
+                </button>
+              ))}
+            </div>
+
+            <p className="mt-2 text-xs leading-6" style={{ color: 'var(--text-tertiary)' }}>
+              {form.lafz_price_mode === 'offset' ? (
+                <>
+                  «۵۰۰ ف» یعنی <b>مزنه + ۵۰۰ × مقیاس</b>. برای طلا که مزنه
+                  هشت‌رقمی است و پله‌ها هزارتومانی، همین درست است.
+                </>
+              ) : (
+                <>
+                  «۷۲۰ ف» یعنی <b>سه رقم آخر نرخ جاری را ۷۲۰ کن</b> و به
+                  نزدیک‌ترین عدد ممکن بچسبان — با نرخ ۲۱۳٬۷۰۰ می‌شود ۲۱۳٬۷۲۰.
+                  رزولوشن ۱۰ تومانی می‌دهد به‌جای ۱٬۰۰۰ تومانی، و برای بازار
+                  دلار مناسب‌تر است. مرجع محاسبه، نرخ زندهٔ بازار است نه مزنهٔ ثابت.
+                </>
+              )}
+            </p>
+
+            {form.lafz_price_mode === 'last3' && (
+              <p
+                className="mt-2 rounded-lg px-3 py-2 text-xs leading-6"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--semantic-warn) 10%, transparent)',
+                  color: 'var(--semantic-warn)',
+                }}
+              >
+                ⚠️ تغییر این گزینه معنای همهٔ لفظ‌های نسبی را عوض می‌کند.
+                وسط ساعت معاملات تغییرش ندهید.
+              </p>
+            )}
           </div>
 
           {/* ─── مدل عملیاتی اتاق ───────────────────────────── */}
@@ -322,7 +391,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
               onClick={() => setField('active', !form.active)}
             >
               <div
-                className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform')}
+                className={cn('absolute top-0.5 h-4 w-4 rounded-full bg-[var(--bg-elevated)] transition-transform')}
                 style={{ transform: form.active ? 'translateX(-1px)' : 'translateX(-17px)' }}
               />
             </div>
@@ -335,7 +404,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5"
+              className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-[var(--surface-tint)]"
               style={{ color: 'var(--text-secondary)' }}
             >
               انصراف
@@ -344,7 +413,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
               type="submit"
               disabled={loading}
               className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
-              style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+              style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
             >
               {loading ? 'در حال ذخیره...' : 'ذخیره'}
             </button>
@@ -417,7 +486,7 @@ export default function MarketsManagement() {
           type="button"
           onClick={() => setShowModal(true)}
           className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-opacity hover:opacity-80"
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
         >
           <Plus size={16} />
           بازار جدید
@@ -450,7 +519,7 @@ export default function MarketsManagement() {
                 {markets.map((m) => (
                   <tr
                     key={m.id}
-                    className="border-t transition-colors hover:bg-white/5"
+                    className="border-t transition-colors hover:bg-[var(--surface-tint)]"
                     style={{ borderColor: 'var(--border-subtle)' }}
                   >
                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>{m.name}</td>
@@ -530,7 +599,7 @@ export default function MarketsManagement() {
                         <button
                           type="button"
                           onClick={() => setEditMarket(m)}
-                          className="rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-white/10"
+                          className="rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-[var(--surface-tint-strong)]"
                           style={{ color: 'var(--accent-gold)' }}
                         >
                           ویرایش
@@ -539,7 +608,7 @@ export default function MarketsManagement() {
                           <button
                             type="button"
                             onClick={() => setDeactivateId(m.id)}
-                            className="rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-white/10"
+                            className="rounded px-2 py-1 text-xs font-medium transition-colors hover:bg-[var(--surface-tint-strong)]"
                             style={{ color: 'var(--semantic-danger)' }}
                           >
                             غیرفعال

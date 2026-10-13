@@ -27,7 +27,7 @@ export function OfflineBanner() {
       className="fixed top-0 inset-x-0 z-[100] flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium"
       style={{
         backgroundColor: '#ca8a04',
-        color: '#000',
+        color: 'var(--bg-elevated)',
       }}
       dir="rtl"
     >

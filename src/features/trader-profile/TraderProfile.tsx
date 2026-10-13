@@ -135,7 +135,7 @@ export default function TraderProfile() {
         <button
           type="button"
           onClick={() => void signOut()}
-          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-white/5"
+          className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-[var(--surface-tint)]"
           style={{ borderColor: 'var(--border-subtle)', color: 'var(--semantic-danger)' }}
         >
           <LogOut size={14} />
@@ -230,7 +230,7 @@ export default function TraderProfile() {
                   return (
                     <tr
                       key={t.id}
-                      className="border-t hover:bg-white/5"
+                      className="border-t hover:bg-[var(--surface-tint)]"
                       style={{ borderColor: 'var(--border-subtle)' }}
                     >
                       <td className="px-3 py-2.5" style={{ color: 'var(--text-secondary)' }}>{t.marketId}</td>

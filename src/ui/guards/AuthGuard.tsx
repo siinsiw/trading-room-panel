@@ -13,8 +13,11 @@ export function AuthGuard() {
   useEffect(() => {
     if (!initialized || loading) return;
     if (!profile) { navigate('/auth/login', { replace: true }); return; }
-    if (!profile.active && profile.role === 'trader') {
-      navigate('/auth/pending-approval', { replace: true });
+    // پنل فقط برای مدیر و حسابدار است (۲۰۲۶-۰۹-۲۲). معامله‌گرها همه‌چیزشان
+    // در بات تلگرام است؛ حساب‌های قدیمی هنوز رمز دارند، پس این مسیر باید
+    // **بسته** باشد نه فقط پنهان.
+    if (profile.role === 'trader') {
+      navigate('/auth/telegram-only', { replace: true });
     }
   }, [profile, loading, initialized, navigate]);
 

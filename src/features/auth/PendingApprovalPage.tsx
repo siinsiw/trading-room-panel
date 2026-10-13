@@ -49,8 +49,8 @@ export default function PendingApprovalPage() {
       <div
         className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-5"
         style={{
-          backgroundColor: 'rgba(212,162,76,0.12)',
-          border: '1px solid rgba(212,162,76,0.25)',
+          backgroundColor: 'color-mix(in srgb, var(--accent-surface) 12%, transparent)',
+          border: '1px solid color-mix(in srgb, var(--accent-surface) 25%, transparent)',
         }}
       >
         <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--accent-gold)' }}>

@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
-import { toFa, formatTomans } from '@/lib/persian';
+import { toFa, formatTomans, formatTether } from '@/lib/persian';
 import { parseError } from '@/lib/errors';
 import { repos } from '@/data/repositories/index';
 import type { Trade, Settlement, Market } from '@/domain/types';
@@ -124,7 +124,7 @@ export default function AccountantReports() {
     { key: 'label', header: groupLabel, format: (b) => b.label },
     { key: 'trades', header: 'تعداد معامله', format: (b) => b.trades },
     { key: 'volume', header: 'حجم (واحد)', format: (b) => b.volume },
-    { key: 'commission', header: 'کمیسیون (تومان)', format: (b) => b.commission },
+    { key: 'commission', header: 'کمیسیون (USDT)', format: (b) => b.commission },
     { key: 'pnl', header: 'سود/زیان (تومان)', format: (b) => b.pnl },
   ];
   const fname = `report-${groupBy}-${todayStamp()}`;
@@ -145,7 +145,7 @@ export default function AccountantReports() {
     meta: [
       { label: 'تعداد ردیف', value: toFa(grouped.length) },
       { label: 'حجم کل',     value: toFa(totalVolume) + ' واحد' },
-      { label: 'کمیسیون کل', value: formatTomans(totalCommission) },
+      { label: 'کمیسیون کل', value: formatTether(totalCommission) },
     ],
   });
 
@@ -154,9 +154,9 @@ export default function AccountantReports() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>گزارش</h1>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onCSV}   disabled={grouped.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
-          <button type="button" onClick={onExcel} disabled={grouped.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
-          <button type="button" onClick={onPdf}   disabled={grouped.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
+          <button type="button" onClick={onCSV}   disabled={grouped.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExcel} disabled={grouped.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button type="button" onClick={onPdf}   disabled={grouped.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
         </div>
       </div>
 
@@ -204,7 +204,7 @@ export default function AccountantReports() {
           <button
             type="button"
             onClick={() => { setDateFrom(''); setDateTo(''); }}
-            className="rounded-lg px-3 py-2 text-xs hover:bg-white/5"
+            className="rounded-lg px-3 py-2 text-xs hover:bg-[var(--surface-tint)]"
             style={{ color: 'var(--text-tertiary)' }}
           >
             پاک کردن
@@ -214,7 +214,7 @@ export default function AccountantReports() {
 
       {/* KPI cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiCard label="کمیسیون کل" value={formatTomans(totalCommission)} loading={loading} />
+        <KpiCard label="کمیسیون کل" value={formatTether(totalCommission)} loading={loading} />
         <KpiCard label="حجم کل" value={toFa(totalVolume) + ' واحد'} loading={loading} />
         <KpiCard label="تریدرهای فعال" value={toFa(activeTraders)} loading={loading} />
         <KpiCard label="تعداد تصفیه" value={toFa(settlements.length)} loading={loading} />
@@ -268,18 +268,18 @@ export default function AccountantReports() {
               </colgroup>
               <thead>
                 <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-                  {[groupBy === 'day' ? 'تاریخ' : groupBy === 'user' ? 'کاربر' : 'دارایی', 'معاملات', 'حجم', 'کمیسیون', 'سود/زیان'].map((h) => (
+                  {[groupBy === 'day' ? 'تاریخ' : groupBy === 'user' ? 'کاربر' : 'دارایی', 'معاملات', 'حجم', 'کمیسیون (تتر)', 'سود/زیان'].map((h) => (
                     <th key={h} className="px-4 py-2.5 font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {grouped.map((b) => (
-                  <tr key={b.key} className="border-t hover:bg-white/5" style={{ borderColor: 'var(--border-subtle)' }}>
+                  <tr key={b.key} className="border-t hover:bg-[var(--surface-tint)]" style={{ borderColor: 'var(--border-subtle)' }}>
                     <td className="px-4 py-2.5" style={{ color: 'var(--text-primary)' }}>{b.label}</td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>{toFa(b.trades)}</td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>{toFa(b.volume)}</td>
-                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>{formatTomans(b.commission)}</td>
+                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>{formatTether(b.commission)}</td>
                     <td
                       className="px-4 py-2.5 tabular-nums font-medium"
                       style={{ color: b.pnl >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)', fontFamily: "'Geist Mono', monospace" }}

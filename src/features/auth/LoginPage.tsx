@@ -137,7 +137,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-xs select-none px-1 py-0.5 rounded"
+              className="absolute left-1 top-1/2 flex h-11 min-w-11 -translate-y-1/2 select-none items-center justify-center rounded text-xs"
               style={{ color: 'var(--text-tertiary)' }}
               tabIndex={-1}
             >
@@ -158,8 +158,8 @@ export default function LoginPage() {
             role="alert"
             style={{
               color: 'var(--semantic-danger)',
-              backgroundColor: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
+              backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--semantic-danger) 20%, transparent)',
             }}
           >
             {serverError}
@@ -172,9 +172,9 @@ export default function LoginPage() {
           disabled={isSubmitting}
           className={cn(
             'w-full py-2.5 rounded-lg font-bold text-sm transition-opacity',
-            isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
+            isSubmitting ? 'cursor-wait' : 'hover:opacity-90',
           )}
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
@@ -199,11 +199,12 @@ export default function LoginPage() {
         >
           رمز را فراموش کردید؟
         </Link>
-        <span style={{ color: 'var(--text-tertiary)' }}>
-          حساب ندارید؟{' '}
-          <Link to="/auth/signup" className="font-medium hover:underline" style={{ color: 'var(--accent-gold)' }}>
-            ثبت‌نام
-          </Link>
+        {/* ثبت‌نام از سایت برداشته شد (۲۰۲۶-۰۹-۲۲): عضویت فقط از بات
+            تلگرام انجام می‌شود و این پنل فقط برای مدیر و حسابدار است. */}
+        <span className="text-center leading-relaxed" style={{ color: 'var(--text-tertiary)' }}>
+          این پنل فقط برای مدیر و حسابدار است.
+          <br />
+          عضویت معامله‌گران از ربات تلگرام انجام می‌شود.
         </span>
       </div>
     </div>

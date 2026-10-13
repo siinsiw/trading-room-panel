@@ -27,6 +27,10 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
   const [fullName,    setFullName]    = useState(user.full_name);
   const [phone,       setPhone]       = useState(user.phone);
   const [telegramId,  setTelegramId]  = useState(user.telegram_id ?? '');
+  // migration 0010 — اسمی که در گروه تلگرام به‌جای نام واقعی نشان داده می‌شود
+  const [alias,       setAlias]       = useState(
+    (user as Profile & { alias?: string | null }).alias ?? '',
+  );
   const [role,        setRole]        = useState<'admin' | 'accountant' | 'trader'>(user.role);
   const [active,      setActive]      = useState(user.active);
   const [deposit,     setDeposit]     = useState(user.deposit_tether?.toString() ?? '');
@@ -65,7 +69,7 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
         active,
         deposit_tether:      deposit    !== '' ? parseFloat(deposit)    : null,
         per_unit_deposit:    perUnit    !== '' ? parseFloat(perUnit)    : null,
-        commission_per_unit: commission !== '' ? parseInt(commission, 10) : null,
+        commission_per_unit: commission !== '' ? parseFloat(commission) : null,
         max_open_units:      maxUnits   !== '' ? parseInt(maxUnits, 10)   : null,
         member_group_id:     groupId    || null,
         referrer_id:         referrerId || null,
@@ -74,6 +78,8 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
         is_credit_user:        isCreditUser,
         credit_units:          isCreditUser && creditUnits !== '' ? parseInt(creditUnits, 10) : null,
         margin_call_disabled:  marginCallDisabled,
+        // migration 0010
+        alias:                 alias.trim() || null,
       };
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -102,6 +108,10 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
         { label: 'نام و نام خانوادگی', key: 'fullName', render: () => (
           <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} style={inputStyle} />
         ) },
+        { label: 'اسم مستعار (نمایش در گروه)', key: 'alias', render: () => (
+          <input value={alias} onChange={(e) => setAlias(e.target.value)}
+            placeholder="خالی = نام واقعی" className={inputCls} style={inputStyle} />
+        ) },
         { label: 'موبایل', key: 'phone', render: () => (
           <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="09…" className={inputCls} style={inputStyle} />
         ) },
@@ -119,12 +129,12 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
           <div className="flex items-center gap-3 pt-2">
             <button type="button" onClick={() => setActive(true)}
               className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
-              style={active ? { backgroundColor: 'var(--semantic-success)', color: '#000', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+              style={active ? { backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
               فعال
             </button>
             <button type="button" onClick={() => setActive(false)}
               className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
-              style={!active ? { backgroundColor: 'var(--semantic-danger)', color: '#fff', borderColor: 'var(--semantic-danger)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+              style={!active ? { backgroundColor: 'var(--semantic-danger)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-danger)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
               غیرفعال
             </button>
           </div>
@@ -140,8 +150,8 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
         { label: 'بیعانه هر واحد (USDT)', key: 'perUnit', render: () => (
           <input type="number" inputMode="decimal" value={perUnit} onChange={(e) => setPerUnit(e.target.value)} placeholder="مثلاً 500" className={inputCls} style={inputStyle} />
         ) },
-        { label: 'کمیسیون هر واحد (تومان)', key: 'commission', render: () => (
-          <input type="number" inputMode="numeric" value={commission} onChange={(e) => setCommission(e.target.value)} placeholder="مثلاً 50000" className={inputCls} style={inputStyle} />
+        { label: 'کمیسیون هر واحد (USDT)', key: 'commission', render: () => (
+          <input type="number" inputMode="numeric" value={commission} onChange={(e) => setCommission(e.target.value)} placeholder="مثلاً 1" className={inputCls} style={inputStyle} />
         ) },
         { label: 'سقف موقعیت باز (واحد)', key: 'maxUnits', render: () => (
           <input type="number" inputMode="numeric" value={maxUnits} onChange={(e) => setMaxUnits(e.target.value)} placeholder="خالی = بدون محدودیت" className={inputCls} style={inputStyle} />
@@ -155,12 +165,12 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
           <div className="flex items-center gap-3 pt-2">
             <button type="button" onClick={() => setIsCreditUser(false)}
               className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
-              style={!isCreditUser ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+              style={!isCreditUser ? { backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-surface)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
               ودیعه‌ای
             </button>
             <button type="button" onClick={() => setIsCreditUser(true)}
               className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
-              style={isCreditUser ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+              style={isCreditUser ? { backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-surface)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
               اعتباری
             </button>
           </div>
@@ -182,12 +192,12 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
             <div className="flex items-center gap-3 pt-2">
               <button type="button" onClick={() => setMarginCallDisabled(false)}
                 className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
-                style={!marginCallDisabled ? { backgroundColor: 'var(--semantic-success)', color: '#000', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                style={!marginCallDisabled ? { backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                 فعال
               </button>
               <button type="button" onClick={() => setMarginCallDisabled(true)}
                 className="flex-1 rounded-lg border px-3 py-2 text-sm font-medium"
-                style={marginCallDisabled ? { backgroundColor: 'var(--semantic-warn)', color: '#000', borderColor: 'var(--semantic-warn)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                style={marginCallDisabled ? { backgroundColor: 'var(--semantic-warn)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-warn)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                 غیرفعال
               </button>
             </div>
@@ -228,8 +238,8 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -243,7 +253,7 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
           <h3 className="text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
             ویرایش کاربر — <span style={{ color: 'var(--accent-gold)' }}>{user.full_name}</span>
           </h3>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-white/5" style={{ color: 'var(--text-tertiary)' }}>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-[var(--surface-tint)]" style={{ color: 'var(--text-tertiary)' }}>
             <X size={18} />
           </button>
         </div>
@@ -272,7 +282,7 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5"
+            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-[var(--surface-tint)]"
             style={{ color: 'var(--text-secondary)' }}
           >
             انصراف
@@ -282,7 +292,7 @@ export function EditUserModal({ user, allTraders, onClose, onSaved }: Props) {
             onClick={() => void handleSave()}
             disabled={saving}
             className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50 hover:opacity-90"
-            style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+            style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
           >
             {saving ? 'در حال ذخیره…' : 'ذخیره تغییرات'}
           </button>

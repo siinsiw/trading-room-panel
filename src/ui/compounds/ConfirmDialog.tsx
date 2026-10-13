@@ -68,8 +68,8 @@ export function ConfirmDialog({
             {/* Backdrop */}
             <Dialog.Overlay asChild>
               <motion.div
-                className="fixed inset-0 z-50"
-                style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+                className="fixed inset-0 z-[70]"
+                style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -80,7 +80,7 @@ export function ConfirmDialog({
             {/* Dialog card */}
             <Dialog.Content asChild>
               <motion.div
-                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                className="fixed inset-0 z-[70] flex items-center justify-center p-4"
                 initial={{ opacity: 0, scale: 0.93 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.93 }}
@@ -167,7 +167,7 @@ export function ConfirmDialog({
                       disabled={busy}
                       className={cn(
                         'rounded-lg px-4 py-2 text-sm font-medium transition-colors duration-150',
-                        'hover:bg-white/5 disabled:opacity-50',
+                        'hover:bg-[var(--surface-tint)] disabled:opacity-50',
                       )}
                       style={{ color: 'var(--text-secondary)' }}
                     >
@@ -187,8 +187,8 @@ export function ConfirmDialog({
                       )}
                       style={
                         isDanger
-                          ? { backgroundColor: 'var(--semantic-danger)', color: '#fff' }
-                          : { backgroundColor: 'var(--accent-gold)', color: '#000' }
+                          ? { backgroundColor: 'var(--semantic-danger)', color: 'var(--bg-elevated)' }
+                          : { backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }
                       }
                     >
                       {busy && (

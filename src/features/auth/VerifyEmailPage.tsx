@@ -45,7 +45,7 @@ export default function VerifyEmailPage() {
           background: 'linear-gradient(135deg, var(--accent-gold-dim), var(--accent-gold))',
         }}
       >
-        <svg className="w-8 h-8 text-black" viewBox="0 0 24 24" fill="none">
+        <svg className="w-8 h-8 text-[var(--text-on-accent)]" viewBox="0 0 24 24" fill="none">
           <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="2" />
           <path d="M2 8l10 6 10-6" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
         </svg>
@@ -65,8 +65,8 @@ export default function VerifyEmailPage() {
           dir="ltr"
           style={{
             color: 'var(--accent-gold)',
-            backgroundColor: 'rgba(212,162,76,0.08)',
-            border: '1px solid rgba(212,162,76,0.2)',
+            backgroundColor: 'color-mix(in srgb, var(--accent-surface) 8%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--accent-surface) 20%, transparent)',
           }}
         >
           {email}
@@ -83,7 +83,7 @@ export default function VerifyEmailPage() {
         onClick={handleResend}
         disabled={resending || !email}
         className="w-full py-2.5 rounded-lg font-bold text-sm transition-opacity mb-4 disabled:opacity-50 disabled:cursor-not-allowed hover:opacity-90"
-        style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+        style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
       >
         {resending ? (
           <span className="flex items-center justify-center gap-2">
@@ -103,7 +103,7 @@ export default function VerifyEmailPage() {
         className="text-sm hover:underline"
         style={{ color: 'var(--text-tertiary)' }}
       >
-        ← بازگشت به ورود
+        → بازگشت به ورود
       </Link>
     </div>
   );

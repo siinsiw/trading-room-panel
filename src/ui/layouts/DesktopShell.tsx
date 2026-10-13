@@ -4,8 +4,6 @@ import {
   LayoutDashboard,
   TrendingUp,
   Users,
-  BookOpen,
-  History,
   User,
   BarChart2,
   FileText,
@@ -16,6 +14,8 @@ import {
   PanelRightClose,
   PanelRightOpen,
   CalendarOff,
+  SlidersHorizontal,
+  UserPlus,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/auth.store';
 import { useTimeStore } from '@/stores/time.store';
@@ -23,6 +23,7 @@ import { toFa } from '@/lib/persian';
 import { cn } from '@/lib/cn';
 import { NotificationBell } from '@/ui/compounds/NotificationBell';
 import { Logo } from '@/ui/compounds/Logo';
+import { ThemeToggle } from '@/ui/compounds/ThemeToggle';
 
 interface NavItem {
   label: string;
@@ -38,6 +39,8 @@ const adminNav: NavItem[] = [
   { label: 'لیست معاملات',    to: '/admin/trades',        icon: <BarChart2 size={16} /> },
   { label: 'ثبت دستی معامله', to: '/admin/manual-trade',  icon: <PlusCircle size={16} /> },
   { label: 'تعطیلات بازار',    to: '/admin/holidays',      icon: <CalendarOff size={16} /> },
+  { label: 'درخواست عضویت',   to: '/admin/registrations', icon: <UserPlus size={16} /> },
+  { label: 'تنظیمات اتاق',    to: '/admin/settings',      icon: <SlidersHorizontal size={16} /> },
   { label: 'پروفایل من',      to: '/admin/profile',       icon: <User size={16} /> },
 ];
 
@@ -49,16 +52,10 @@ const accountantNav: NavItem[] = [
   { label: 'پروفایل من', to: '/accountant/profile',    icon: <User size={16} /> },
 ];
 
-const traderNav: NavItem[] = [
-  { label: 'دفتر سفارش', to: '/trader/orderbook', icon: <BookOpen size={16} /> },
-  { label: 'سفارش‌ها',   to: '/trader/orders',    icon: <TrendingUp size={16} /> },
-  { label: 'تاریخچه',    to: '/trader/history',   icon: <History size={16} /> },
-  { label: 'حساب‌من',    to: '/trader/account',   icon: <User size={16} /> },
-];
+// ناوبری معامله‌گر برداشته شد (۲۰۲۶-۰۹-۲۲) — پنل فقط داشبورد مدیریتی است.
 
 function navForRole(role: string | null): NavItem[] {
   if (role === 'admin') return adminNav;
-  if (role === 'trader') return traderNav;
   if (role === 'accountant') return accountantNav;
   return [];
 }
@@ -146,7 +143,7 @@ export function DesktopShell() {
               type="button"
               onClick={() => setCollapsed(true)}
               title="جمع کردن منو"
-              className="rounded p-1.5 hover:bg-white/5 transition-colors shrink-0"
+              className="rounded p-1.5 hover:bg-[var(--surface-tint)] transition-colors shrink-0"
               style={{ color: 'var(--text-tertiary)' }}
             >
               <PanelRightClose size={16} />
@@ -160,7 +157,7 @@ export function DesktopShell() {
             type="button"
             onClick={() => setCollapsed(false)}
             title="باز کردن منو"
-            className="mx-auto mt-1 mb-1 rounded p-1.5 hover:bg-white/5 transition-colors"
+            className="mx-auto mt-1 mb-1 rounded p-1.5 hover:bg-[var(--surface-tint)] transition-colors"
             style={{ color: 'var(--text-tertiary)' }}
           >
             <PanelRightOpen size={16} />
@@ -216,7 +213,7 @@ export function DesktopShell() {
                 cn(
                   'flex items-center rounded-lg text-sm font-medium transition-colors duration-150',
                   collapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2.5',
-                  isActive ? '' : 'hover:bg-white/5',
+                  isActive ? '' : 'hover:bg-[var(--surface-tint)]',
                 )
               }
               style={({ isActive }) =>
@@ -244,7 +241,7 @@ export function DesktopShell() {
             onClick={() => void signOut()}
             title={collapsed ? 'خروج از حساب' : undefined}
             className={cn(
-              'flex w-full items-center rounded-lg text-sm font-medium transition-colors hover:bg-white/5',
+              'flex w-full items-center rounded-lg text-sm font-medium transition-colors hover:bg-[var(--surface-tint)]',
               collapsed ? 'justify-center p-2.5' : 'gap-2.5 px-3 py-2.5',
             )}
             style={{ color: 'var(--text-secondary)' }}
@@ -320,7 +317,8 @@ export function DesktopShell() {
           </div>
 
           {/* Right side: notification bell */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            <ThemeToggle />
             <NotificationBell />
           </div>
         </header>

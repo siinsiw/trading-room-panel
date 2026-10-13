@@ -35,8 +35,8 @@ function TradeDrawer({ trade, onClose }: TradeDrawerProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -134,9 +134,9 @@ export default function AccountantTrades() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>معاملات</h1>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onCSV}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
-          <button type="button" onClick={onExcel} disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
-          <button type="button" onClick={onPdf}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
+          <button type="button" onClick={onCSV}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExcel} disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button type="button" onClick={onPdf}   disabled={filtered.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
         </div>
       </div>
 
@@ -208,7 +208,7 @@ export default function AccountantTrades() {
                 {filtered.map((t) => (
                   <tr
                     key={t.id}
-                    className="cursor-pointer border-t hover:bg-white/5 transition-colors"
+                    className="cursor-pointer border-t hover:bg-[var(--surface-tint)] transition-colors"
                     style={{ borderColor: 'var(--border-subtle)' }}
                     onClick={() => setSelectedTrade(t)}
                   >

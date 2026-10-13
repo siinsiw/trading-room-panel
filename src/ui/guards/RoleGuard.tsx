@@ -6,7 +6,7 @@ import type { Profile } from '@/lib/database.types';
 const DEFAULT_ROUTE: Record<Profile['role'], string> = {
   admin:      '/admin/dashboard',
   accountant: '/accountant/reports',
-  trader:     '/trader/orderbook',
+  trader:     '/auth/telegram-only',
 };
 
 interface Props { roles: Profile['role'][] }

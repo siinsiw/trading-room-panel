@@ -16,12 +16,14 @@ interface PreviewRow {
   trader_id: string;
   full_name: string;
   deposit_tether: number;
+  open_units: number;
   floating_pnl_toman: number;
   floating_pnl_tether: number;
-  commission_accumulated: number;
+  commission_accumulated: number;   // تتر (مایگریشن ۰۰۱۲)
   required_tether: number;
   available_tether: number;
-  percentage: number;
+  percentage: number;               // سلامت ودیعه، ۱۰۰ = دست‌نخورده
+  loss_percentage: number;
   zone: string;
 }
 
@@ -62,7 +64,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
         </colgroup>
         <thead>
           <tr style={{ backgroundColor: 'var(--bg-overlay)' }}>
-            {['نام تریدر', 'ودیعه', 'P&L شناور', 'کمیسیون', 'مارجین لازم', 'موجود', 'درصد', 'وضعیت'].map((h) => (
+            {['نام تریدر', 'ودیعه', 'واحد باز', 'P&L شناور', 'کمیسیون (تتر)', 'بیعانهٔ لازم', 'موجود', 'ضرر', 'وضعیت'].map((h) => (
               <th key={h} className="px-3 py-2 font-medium whitespace-nowrap" style={{ color: 'var(--text-tertiary)' }}>
                 {h}
               </th>
@@ -71,7 +73,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr key={r.trader_id} className="border-t hover:bg-white/5" style={{ borderColor: 'var(--border-subtle)' }}>
+            <tr key={r.trader_id} className="border-t hover:bg-[var(--surface-tint)]" style={{ borderColor: 'var(--border-subtle)' }}>
               <td className="px-3 py-2.5" style={{ color: 'var(--text-primary)' }}>{r.full_name}</td>
               <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
                 {formatTether(r.deposit_tether)}
@@ -86,7 +88,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
                 {r.floating_pnl_toman >= 0 ? '+' : ''}{formatTomans(r.floating_pnl_toman)}
               </td>
               <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                {formatTomans(r.commission_accumulated)}
+                {formatTether(r.commission_accumulated)}
               </td>
               <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
                 {formatTether(r.required_tether)}
@@ -400,7 +402,7 @@ export default function SettlementControl() {
               onClick={() => void fetchTempPreview()}
               disabled={loadingTemp}
               className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 hover:opacity-80"
-              style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+              style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
             >
               {loadingTemp ? 'محاسبه...' : 'محاسبه'}
             </button>
@@ -461,7 +463,7 @@ export default function SettlementControl() {
                   onClick={() => void handleFinalPreview()}
                   disabled={loadingFinal}
                   className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 hover:opacity-80"
-                  style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+                  style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
                 >
                   پیش‌نمایش
                 </button>
@@ -489,7 +491,7 @@ export default function SettlementControl() {
                     onClick={() => setConfirmApply(true)}
                     disabled={!previewDone}
                     className="w-full rounded-lg py-2.5 text-sm font-bold disabled:opacity-40 hover:opacity-80"
-                    style={{ backgroundColor: 'var(--semantic-danger)', color: '#fff' }}
+                    style={{ backgroundColor: 'var(--semantic-danger)', color: 'var(--bg-elevated)' }}
                   >
                     اعمال تصفیه قطعی
                   </button>
@@ -557,7 +559,7 @@ export default function SettlementControl() {
               onClick={() => setConfirmEmergency(true)}
               disabled={!emergencyRate || applyingEmergency}
               className="rounded-lg px-4 py-2 text-sm font-bold disabled:opacity-40 hover:opacity-80"
-              style={{ backgroundColor: 'var(--semantic-danger)', color: '#fff' }}
+              style={{ backgroundColor: 'var(--semantic-danger)', color: 'var(--bg-elevated)' }}
             >
               تصفیهٔ فوری
             </button>
@@ -647,7 +649,7 @@ export default function SettlementControl() {
                 {archive.map((s) => (
                   <tr
                     key={s.id}
-                    className="border-t hover:bg-white/5"
+                    className="border-t hover:bg-[var(--surface-tint)]"
                     style={{ borderColor: 'var(--border-subtle)' }}
                   >
                     <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
@@ -669,7 +671,7 @@ export default function SettlementControl() {
                       {toFa(s.totalVolumeUnits)}
                     </td>
                     <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                      {formatTomans(s.totalCommissionToman)}
+                      {formatTether(s.totalCommissionTether)}
                     </td>
                     <td className="px-3 py-2.5">
                       <span

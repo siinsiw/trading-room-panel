@@ -18,8 +18,8 @@ const SIZE_CLASSES: Record<ButtonSize, string> = {
 
 const VARIANT_STYLE: Record<ButtonVariant, React.CSSProperties> = {
   primary: {
-    backgroundColor: 'var(--accent-gold)',
-    color: '#000',
+    backgroundColor: 'var(--accent-surface)',
+    color: 'var(--text-on-accent)',
     border: 'none',
   },
   ghost: {
@@ -29,7 +29,7 @@ const VARIANT_STYLE: Record<ButtonVariant, React.CSSProperties> = {
   },
   danger: {
     backgroundColor: 'var(--semantic-danger)',
-    color: '#fff',
+    color: 'var(--bg-elevated)',
     border: 'none',
   },
   outline: {
@@ -41,7 +41,7 @@ const VARIANT_STYLE: Record<ButtonVariant, React.CSSProperties> = {
 
 const HOVER_CLASS: Record<ButtonVariant, string> = {
   primary: 'hover:brightness-110',
-  ghost: 'hover:bg-white/10',
+  ghost: 'hover:bg-[var(--surface-tint-strong)]',
   danger: 'hover:brightness-110',
   outline: 'hover:bg-[color-mix(in_srgb,var(--accent-gold)_10%,transparent)]',
 };

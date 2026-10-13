@@ -24,6 +24,8 @@ export type Database = {
           is_credit_user: boolean;
           credit_units: number | null;
           margin_call_disabled: boolean;
+          // migration 0010 — اسم مستعار برای نمایش در گروه تلگرام
+          alias: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -47,6 +49,7 @@ export type Database = {
           is_credit_user?: boolean;
           credit_units?: number | null;
           margin_call_disabled?: boolean;
+          alias?: string | null;
         };
         Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
       };
@@ -83,9 +86,14 @@ export type Database = {
           margin_liquidate_pct: number;
           tether_rate_today: number | null;
           tether_rate_tomorrow: number | null;
+          // migration 0010
+          lafz_price_mode: 'offset' | 'last3';
           // migration 0007
           liquidation_tolerance_toman: number;
           parry_settlement_price: number | null;
+          // migration 0012 — کف و سقف حجم هر لفظ
+          min_qty: number;
+          max_qty: number;
         };
         Insert: Omit<Database['public']['Tables']['markets']['Row'], 'created_at' | 'updated_at'>;
         Update: Partial<Database['public']['Tables']['markets']['Insert']>;
@@ -161,7 +169,7 @@ export type Database = {
           snapshot_before: Json;
           total_trades_count: number;
           total_volume_units: number;
-          total_commission_toman: number;
+          total_commission_tether: number;
         };
         Insert: Omit<Database['public']['Tables']['settlements']['Row'], 'applied_at'>;
         Update: Partial<Database['public']['Tables']['settlements']['Insert']>;

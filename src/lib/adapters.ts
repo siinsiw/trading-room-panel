@@ -12,6 +12,7 @@ export function dbToMarket(d: DBMarket): Market {
   const dx = d as DBMarket & {
     mode?: 'parry' | 'margin';
     parry_threshold?: number | null;
+    lafz_price_mode?: 'offset' | 'last3';
     margin_warn_pct?: number | null;
     margin_liquidate_pct?: number | null;
     tether_rate_today?: number | null;
@@ -41,6 +42,9 @@ export function dbToMarket(d: DBMarket): Market {
       dx.liquidation_tolerance_toman == null ? 200 : Number(dx.liquidation_tolerance_toman),
     parrySettlementPrice:
       dx.parry_settlement_price == null ? undefined : Number(dx.parry_settlement_price),
+    lafzPriceMode: dx.lafz_price_mode ?? 'offset',
+    minQty: dx.min_qty ?? 1,
+    maxQty: dx.max_qty ?? 30,
   };
 }
 
@@ -116,6 +120,6 @@ export function dbToSettlement(d: DBSettlement): Settlement {
       : JSON.stringify(d.snapshot_before),
     totalTradesCount: d.total_trades_count,
     totalVolumeUnits: d.total_volume_units,
-    totalCommissionToman: Number(d.total_commission_toman),
+    totalCommissionTether: Number(d.total_commission_tether),
   };
 }

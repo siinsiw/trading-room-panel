@@ -49,7 +49,7 @@ export default function ForgotPasswordPage() {
       <div className="text-center">
         <div
           className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4"
-          style={{ backgroundColor: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}
+          style={{ backgroundColor: 'color-mix(in srgb, var(--semantic-success) 12%, transparent)', border: '1px solid color-mix(in srgb, var(--semantic-success) 25%, transparent)' }}
         >
           <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" style={{ color: 'var(--semantic-success)' }}>
             <path d="M20 6L9 17l-5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -68,10 +68,10 @@ export default function ForgotPasswordPage() {
 
         <Link
           to="/auth/login"
-          className="inline-block text-sm font-medium hover:underline"
+          className="inline-flex min-h-11 items-center justify-center px-4 text-sm font-medium hover:underline"
           style={{ color: 'var(--accent-gold)' }}
         >
-          ← بازگشت به ورود
+          → بازگشت به ورود
         </Link>
       </div>
     );
@@ -120,8 +120,8 @@ export default function ForgotPasswordPage() {
             role="alert"
             style={{
               color: 'var(--semantic-danger)',
-              backgroundColor: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
+              backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--semantic-danger) 20%, transparent)',
             }}
           >
             {serverError}
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
             'w-full py-2.5 rounded-lg font-bold text-sm transition-opacity',
             isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
           )}
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">
@@ -154,7 +154,7 @@ export default function ForgotPasswordPage() {
       <div className="mt-5 text-center">
         <Link
           to="/auth/login"
-          className="text-sm hover:underline"
+          className="inline-flex min-h-11 items-center justify-center px-4 text-sm hover:underline"
           style={{ color: 'var(--accent-gold)' }}
         >
           ← بازگشت به ورود

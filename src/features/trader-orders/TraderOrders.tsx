@@ -136,7 +136,7 @@ function OrderTable({ orders, showCancel, onCancel }: OrderTableProps) {
           {orders.map((o) => (
             <tr
               key={o.id}
-              className="border-t transition-colors hover:bg-white/5"
+              className="border-t transition-colors hover:bg-[var(--surface-tint)]"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
               <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>

@@ -6,6 +6,9 @@ export function formatJalaliDate(jalali: string): string {
 
 export function formatIsoToJalali(iso: string): string {
   const date = new Date(iso);
+  // Intl روی Invalid Date استثنا می‌دهد و چون این تابع مستقیم داخل render
+  // صدا زده می‌شود، یک ستون تاریخِ خالی کل صفحه را سفید می‌کرد.
+  if (Number.isNaN(date.getTime())) return '—';
   const fmt = new Intl.DateTimeFormat('fa-IR', {
     timeZone: 'Asia/Tehran',
     year: 'numeric',
@@ -21,6 +24,7 @@ export function formatIsoToJalali(iso: string): string {
 
 export function formatIsoToTime(iso: string): string {
   const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return '—';
   return toFa(date.toLocaleTimeString('fa-IR', {
     timeZone: 'Asia/Tehran',
     hour: '2-digit',

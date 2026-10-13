@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import * as Tabs from '@radix-ui/react-tabs';
 import { toast } from 'sonner';
-import { toFa, formatTomans } from '@/lib/persian';
+import type React from 'react';
+import { toFa, formatTomans, formatTether } from '@/lib/persian';
 import { parseError } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 import { useRealtime } from '@/hooks/useRealtime';
@@ -27,7 +28,7 @@ interface TradeRow {
   rent_block_value: number | null;
   note: string | null;
   manual: boolean;
-  source: 'bot' | 'panel' | 'manual';
+  source: 'bot' | 'panel' | 'today_tomorrow_group' | (string & {});
   settled: boolean;
   buyer_pnl_toman: number | null;
   seller_pnl_toman: number | null;
@@ -41,12 +42,21 @@ interface TradeRow {
 type TabId = 'today' | 'tomorrow';
 
 // ─── Badges ───────────────────────────────────────────────────────
+// ستون `source` در دیتابیس بدون CHECK است و مقدار 'today_tomorrow_group'
+// (بات «امروز فردا»، فاز ۲) هم مجاز است. قبلاً هر مقدار خارج از این نقشه
+// باعث می‌شد کل صفحه سفید شود، چون cfg برابر undefined می‌شد.
+const SOURCE_CFG: Record<string, { icon: React.ReactNode; label: string; color: string }> = {
+  bot:                  { icon: <Bot size={11} />,      label: 'بات',      color: 'var(--semantic-buy)' },
+  panel:                { icon: <UserIcon size={11} />, label: 'پنل',      color: 'var(--accent-gold)' },
+  today_tomorrow_group: { icon: <Pencil size={11} />,   label: 'امروزفردا', color: 'var(--semantic-warn)' },
+};
+
 function SourceBadge({ source }: { source: TradeRow['source'] }) {
-  const cfg = {
-    bot:    { icon: <Bot size={11} />,      label: 'بات',       color: 'var(--semantic-buy)' },
-    panel:  { icon: <UserIcon size={11} />, label: 'پنل',       color: 'var(--accent-gold)' },
-    manual: { icon: <Pencil size={11} />,   label: 'دستی',     color: 'var(--semantic-warn)' },
-  }[source];
+  const cfg = SOURCE_CFG[source] ?? {
+    icon: <Pencil size={11} />,
+    label: source || '—',
+    color: 'var(--text-tertiary)',
+  };
   return (
     <span
       className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium"
@@ -97,7 +107,7 @@ function ExportButtons({ disabled, onCSV, onExcel, onPdf }: {
     borderColor: 'var(--border-strong)',
     color: 'var(--text-primary)',
   };
-  const btnCls = 'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-white/5 disabled:opacity-40 disabled:cursor-not-allowed';
+  const btnCls = 'flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition-colors hover:bg-[var(--surface-tint)] disabled:opacity-40 disabled:cursor-not-allowed';
   return (
     <div className="flex items-center gap-2">
       <button type="button" onClick={onCSV} disabled={disabled} className={btnCls} style={baseStyle} title="دانلود CSV (با BOM utf-8)">
@@ -119,7 +129,7 @@ function TradeDrawer({ trade, onClose }: { trade: TradeRow; onClose: () => void 
     ['شناسه', trade.id.slice(0, 8) + '…'],
     ['نوع', trade.kind === 'today' ? 'امروزی' : 'فردایی'],
     ['دسته', trade.trade_type === 'rent' ? 'اجاره' : trade.trade_type === 'blocked' ? 'بلوکه' : 'عادی'],
-    ['منبع', trade.source === 'bot' ? 'بات تلگرام' : trade.source === 'panel' ? 'پنل' : 'دستی'],
+    ['منبع', trade.source === 'bot' ? 'بات تلگرام' : SOURCE_CFG[trade.source]?.label ?? trade.source],
     ['خریدار', trade.buyer?.full_name ?? trade.buyer_id.slice(0, 8)],
     ['فروشنده', trade.seller?.full_name ?? trade.seller_id.slice(0, 8)],
     ['حجم', toFa(trade.quantity) + ' واحد'],
@@ -138,15 +148,15 @@ function TradeDrawer({ trade, onClose }: { trade: TradeRow; onClose: () => void 
     rows.push(
       ['P&L خریدار', trade.buyer_pnl_toman != null ? formatTomans(trade.buyer_pnl_toman) : '—'],
       ['P&L فروشنده', trade.seller_pnl_toman != null ? formatTomans(trade.seller_pnl_toman) : '—'],
-      ['کمیسیون خریدار', trade.buyer_commission != null ? formatTomans(trade.buyer_commission) : '—'],
-      ['کمیسیون فروشنده', trade.seller_commission != null ? formatTomans(trade.seller_commission) : '—'],
+      ['کمیسیون خریدار', trade.buyer_commission != null ? formatTether(trade.buyer_commission) : '—'],
+      ['کمیسیون فروشنده', trade.seller_commission != null ? formatTether(trade.seller_commission) : '—'],
     );
   }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -157,7 +167,7 @@ function TradeDrawer({ trade, onClose }: { trade: TradeRow; onClose: () => void 
       >
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: 'var(--border-subtle)' }}>
           <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>جزئیات معامله</p>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-white/5" style={{ color: 'var(--text-tertiary)' }}>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-[var(--surface-tint)]" style={{ color: 'var(--text-tertiary)' }}>
             <X size={18} />
           </button>
         </div>
@@ -362,7 +372,7 @@ export default function TradesList() {
                     {filtered.map((t) => (
                       <tr
                         key={t.id}
-                        className="cursor-pointer border-t transition-colors hover:bg-white/5"
+                        className="cursor-pointer border-t transition-colors hover:bg-[var(--surface-tint)]"
                         style={{ borderColor: 'var(--border-subtle)' }}
                         onClick={() => setSelected(t)}
                       >

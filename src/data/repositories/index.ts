@@ -34,6 +34,9 @@ export const repos = {
         margin_liquidate_pct: m.marginLiquidatePct ?? 85,
         // migration 0007 — tolerance + parry settlement price
         liquidation_tolerance_toman: m.liquidationToleranceToman ?? 200,
+        lafz_price_mode: m.lafzPriceMode ?? 'offset',
+        min_qty: m.minQty ?? 1,
+        max_qty: m.maxQty ?? 30,
         parry_settlement_price: m.parrySettlementPrice ?? null,
       } as Parameters<typeof marketsRepo.create>[0]);
       return dbToMarket(d);
@@ -59,6 +62,9 @@ export const repos = {
         ...(patch.parrySettlementPrice !== undefined && {
           parry_settlement_price: patch.parrySettlementPrice ?? null,
         }),
+        ...(patch.lafzPriceMode !== undefined && { lafz_price_mode: patch.lafzPriceMode }),
+        ...(patch.minQty !== undefined && { min_qty: patch.minQty }),
+        ...(patch.maxQty !== undefined && { max_qty: patch.maxQty }),
       });
       return dbToMarket(d);
     },

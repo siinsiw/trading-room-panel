@@ -18,14 +18,10 @@ export default function RoleSelect() {
       navigate('/auth/login', { replace: true });
       return;
     }
-    if (!profile.active && profile.role === 'trader') {
-      navigate('/auth/pending-approval', { replace: true });
-      return;
-    }
     const dest =
       profile.role === 'admin'      ? '/admin/dashboard'      :
       profile.role === 'accountant' ? '/accountant/reports'   :
-                                      '/trader/orderbook';
+                                      '/auth/telegram-only';
     navigate(dest, { replace: true });
   }, [profile, initialized, loading, navigate]);
 

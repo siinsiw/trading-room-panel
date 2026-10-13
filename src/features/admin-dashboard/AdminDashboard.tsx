@@ -1,83 +1,95 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/cn';
 import { toFa, formatTomans } from '@/lib/persian';
 import { parseError } from '@/lib/errors';
 import { useTimeStore } from '@/stores/time.store';
 import { useRealtime } from '@/hooks/useRealtime';
 import { repos } from '@/data/repositories/index';
 import { supabase } from '@/lib/supabase';
-import { ZoneBadge } from '@/ui/compounds/ZoneBadge';
+import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from 'recharts';
 
 import type { Market, Order, Trade } from '@/domain/types';
 import type { Profile } from '@/lib/database.types';
-import { Lock, Unlock, Pencil, Check, X } from 'lucide-react';
+import { Lock, Unlock, Pencil, Check, X, ChevronLeft, UserPlus, TrendingDown } from 'lucide-react';
 
-interface MarginInfo {
-  percentage: number;
-  zone: 'safe' | 'warn' | 'call';
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// داشبورد روی سه سؤال ساخته شده، نه روی «هرچه داریم را نشان بده»:
+//   ۱. بازار در چه حالی است؟      → نوار بالا (مزنه بزرگ‌ترین عدد صفحه)
+//   ۲. چه چیزی کار من را می‌خواهد؟ → فهرست «نیاز به رسیدگی»
+//   ۳. امروز چطور گذشت؟           → نبض امروز (نمودار + چهار عدد)
+// بقیه چیزها صفحهٔ اختصاصی خودشان را دارند و اینجا تکرار نمی‌شوند.
+// ─────────────────────────────────────────────────────────────────────────────
 
-interface UserWithMargin {
+interface MarginInfo { lossPct: number; zone: 'safe' | 'warn' | 'call' }
+
+/** یک کار روی میز مدیر — همه در یک فهرست، مرتب‌شده بر اساس فوریت */
+interface ActionItem {
+  id: string;
+  kind: 'call' | 'warn' | 'approval';
+  name: string;
+  detail: string;
   profile: Profile;
-  margin: MarginInfo;
 }
 
-interface KpiCardProps {
-  label: string;
-  value: string | number;
-  highlight?: boolean;
-  loading?: boolean;
+const KIND_ORDER: Record<ActionItem['kind'], number> = { call: 0, warn: 1, approval: 2 };
+
+const KIND_STYLE: Record<ActionItem['kind'], { color: string; label: string }> = {
+  call:     { color: 'var(--semantic-danger)',  label: 'حراج' },
+  warn:     { color: 'var(--semantic-warn)',    label: 'هشدار' },
+  approval: { color: 'var(--text-tertiary)',    label: 'عضویت' },
+};
+
+// ─── تاریخ ───────────────────────────────────────────────────────────────────
+
+function jalaliParts() {
+  const fmt = new Intl.DateTimeFormat('fa-IR', {
+    timeZone: 'Asia/Tehran', calendar: 'persian', numberingSystem: 'latn',
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  });
+  const p = fmt.formatToParts(new Date());
+  const get = (t: string) => p.find((x) => x.type === t)?.value ?? '';
+  return { y: get('year'), m: get('month'), d: get('day') };
 }
 
-function KpiCard({ label, value, highlight, loading }: KpiCardProps) {
-  return (
-    <div
-      className="rounded-xl border p-4"
-      style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-    >
-      <p className="text-xs font-medium mb-2" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
-      {loading ? (
-        <div className="skeleton-shimmer h-6 rounded" />
-      ) : (
-        <p
-          className="text-xl font-bold tabular-nums"
-          style={{
-            color: highlight ? 'var(--semantic-danger)' : 'var(--text-primary)',
-            fontFamily: "'Geist Mono', monospace",
-          }}
-        >
-          {typeof value === 'number' ? toFa(value) : value}
-        </p>
-      )}
-    </div>
-  );
+function getTodayJalali(): string {
+  const { y, m, d } = jalaliParts();
+  return `${y}/${m}/${d}`;
 }
 
-interface ApproveModalProps {
-  trader: Profile;
-  onClose: () => void;
-  onApproved: () => void;
+const MONTHS = [
+  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
+  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
+];
+
+function longDate(): string {
+  const { y, m, d } = jalaliParts();
+  const weekday = new Intl.DateTimeFormat('fa-IR', {
+    timeZone: 'Asia/Tehran', weekday: 'long',
+  }).format(new Date());
+  return `${weekday} ${toFa(Number(d))} ${MONTHS[Number(m) - 1] ?? ''} ${toFa(y)}`;
 }
 
-function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
+// ─── مودال تأیید تریدر ───────────────────────────────────────────────────────
+
+function ApproveModal({ trader, onClose, onApproved }: {
+  trader: Profile; onClose: () => void; onApproved: () => void;
+}) {
   const [deposit, setDeposit] = useState('');
   const [perUnit, setPerUnit] = useState('500');
-  const [commission, setCommission] = useState('50000');
+  const [commission, setCommission] = useState('1');
   const [loading, setLoading] = useState(false);
 
   async function handleApprove() {
     const dep = parseFloat(deposit);
-    const pu = parseFloat(perUnit);
-    const com = parseInt(commission, 10);
     if (!dep || dep <= 0) { toast.error('ودیعه را وارد کنید'); return; }
     setLoading(true);
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (supabase as any).rpc('approve_trader', {
         p_trader_id: trader.id,
         p_deposit: dep,
-        p_per_unit_deposit: pu,
-        p_commission: com,
+        p_per_unit_deposit: parseFloat(perUnit),
+        p_commission: parseFloat(commission),
       });
       toast.success(`${trader.full_name} تأیید شد`);
       onApproved();
@@ -91,8 +103,8 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -101,14 +113,17 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
         onClick={(e) => e.stopPropagation()}
         dir="rtl"
       >
-        <h3 className="mb-4 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-          تأیید تریدر — {trader.full_name}
+        <h3 className="mb-1 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
+          تأیید {trader.full_name}
         </h3>
+        <p className="mb-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+          بعد از تأیید، کاربر می‌تواند در گروه لفظ بزند.
+        </p>
         <div className="space-y-3">
           {[
-            { label: 'ودیعه (USDT)', value: deposit, setter: setDeposit, placeholder: '1000' },
-            { label: 'بیعانه هر واحد (USDT)', value: perUnit, setter: setPerUnit, placeholder: '500' },
-            { label: 'کمیسیون هر واحد (تومان)', value: commission, setter: setCommission, placeholder: '50000' },
+            { label: 'ودیعه (تتر)', value: deposit, setter: setDeposit, placeholder: '۵۰۰۰' },
+            { label: 'بیعانهٔ هر واحد (تتر)', value: perUnit, setter: setPerUnit, placeholder: '۵۰۰' },
+            { label: 'کمیسیون هر واحد (تتر)', value: commission, setter: setCommission, placeholder: '۱' },
           ].map((f) => (
             <div key={f.label}>
               <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>{f.label}</label>
@@ -125,21 +140,18 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
         </div>
         <div className="mt-5 flex gap-3">
           <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5"
+            type="button" onClick={onClose}
+            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-[var(--surface-tint)]"
             style={{ color: 'var(--text-secondary)' }}
           >
             انصراف
           </button>
           <button
-            type="button"
-            onClick={() => void handleApprove()}
-            disabled={loading}
+            type="button" onClick={() => void handleApprove()} disabled={loading}
             className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
-            style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
+            style={{ backgroundColor: 'var(--semantic-success)', color: 'var(--text-on-accent)' }}
           >
-            {loading ? 'در حال ثبت...' : 'تأیید'}
+            {loading ? 'در حال ثبت…' : 'تأیید'}
           </button>
         </div>
       </div>
@@ -147,131 +159,119 @@ function ApproveModal({ trader, onClose, onApproved }: ApproveModalProps) {
   );
 }
 
-function getTodayJalali(): string {
-  const fmt = new Intl.DateTimeFormat('fa-IR', {
-    timeZone: 'Asia/Tehran',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    calendar: 'persian',
-    numberingSystem: 'latn',
-  });
-  const parts = fmt.formatToParts(new Date());
-  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
-  return `${get('year')}/${get('month')}/${get('day')}`;
-}
+// ─── صفحه ────────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const { tick, isLocked, lockCountdown } = useTimeStore();
+  const { isLocked, lockCountdown } = useTimeStore();
 
-  const [activeMarket, setActiveMarket] = useState<Market | null>(null);
-  const [activeTraders, setActiveTraders] = useState<number>(0);
-  const [todayVolume, setTodayVolume] = useState<number>(0);
-  const [openOrdersCount, setOpenOrdersCount] = useState<number>(0);
-  const [dangerZoneCount, setDangerZoneCount] = useState<number>(0);
-  const [topBids, setTopBids] = useState<Order[]>([]);
-  const [topAsks, setTopAsks] = useState<Order[]>([]);
-  const [riskTraders, setRiskTraders] = useState<UserWithMargin[]>([]);
-  const [recentTrades, setRecentTrades] = useState<Trade[]>([]);
-  const [pendingTraders, setPendingTraders] = useState<Profile[]>([]);
-  const [loadingKpis, setLoadingKpis] = useState(true);
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [marketId, setMarketId] = useState<string | null>(null);
+  const [activeTraders, setActiveTraders] = useState(0);
+  const [todayVolume, setTodayVolume] = useState(0);
+  const [openOrders, setOpenOrders] = useState<Order[]>([]);
+  const [todayTrades, setTodayTrades] = useState<Trade[]>([]);
+  const [actions, setActions] = useState<ActionItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mazne edit state
   const [editingMazne, setEditingMazne] = useState(false);
   const [mazneInput, setMazneInput] = useState('');
   const [savingMazne, setSavingMazne] = useState(false);
-
-  // Approve modal
   const [approveTrader, setApproveTrader] = useState<Profile | null>(null);
 
   const today = getTodayJalali();
+  const market = useMemo(
+    () => markets.find((m) => m.id === marketId) ?? null,
+    [markets, marketId],
+  );
 
   const fetchData = useCallback(async () => {
     try {
-      // Markets
-      const allMarkets = await repos.markets.getAll();
-      const market = allMarkets.find((m) => m.active) ?? null;
-      setActiveMarket(market);
+      const allMarkets = (await repos.markets.getAll()).filter((m) => m.active);
+      setMarkets(allMarkets);
 
-      // Active traders
-      const traders = await repos.users.getByRole('trader');
-      const active = traders.filter((u) => u.active);
+      const current = allMarkets.find((m) => m.id === marketId) ?? allMarkets[0] ?? null;
+      if (!current) { setLoading(false); return; }
+      if (current.id !== marketId) setMarketId(current.id);
+
+      // پروفایل‌ها یک‌بار خوانده می‌شوند — قبلاً به‌ازای هر تریدر یک کوئری
+      // جداگانه می‌رفت و با ۲۰ تریدر تا ۴۰ رفت‌وبرگشت پشت‌سرهم می‌شد.
+      const { data: profileRows } = await supabase
+        .from('profiles').select('*').eq('role', 'trader');
+      const traders = (profileRows as Profile[]) ?? [];
+      const active = traders.filter((t) => t.active);
+      const pending = traders.filter((t) => !t.active);
       setActiveTraders(active.length);
 
-      // Pending traders
-      const allProfiles = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'trader')
-        .eq('active', false);
-      setPendingTraders((allProfiles.data as Profile[]) ?? []);
+      const [trades, orders] = await Promise.all([
+        repos.trades.getByMarketAndDate(current.id, today),
+        repos.orders.getByMarketAndDate(current.id, today),
+      ]);
+      setTodayVolume(trades.reduce((s, t) => s + t.quantity, 0));
+      setTodayTrades(trades);
+      setOpenOrders(orders.filter((o) => o.status === 'open' || o.status === 'partial'));
 
-      if (market) {
-        // Today's trades
-        const trades = await repos.trades.getByMarketAndDate(market.id, today);
-        setTodayVolume(trades.reduce((s, t) => s + t.quantity, 0));
-        setRecentTrades(trades.slice(-5).reverse());
+      // نرخ تتر دینامیک است و از خود بازار می‌آید — قبلاً ۹۷۰۰۰ ثابت بود
+      const tetherRate = current.tetherRateToday ?? current.tetherRateTomorrow ?? 97_000;
 
-        // Open orders
-        const orders = await repos.orders.getByMarketAndDate(market.id, today);
-        const openOrds = orders.filter((o) => o.status === 'open' || o.status === 'partial');
-        setOpenOrdersCount(openOrds.length);
-        setTopBids(openOrds.filter((o) => o.side === 'buy').sort((a, b) => b.priceToman - a.priceToman).slice(0, 5));
-        setTopAsks(openOrds.filter((o) => o.side === 'sell').sort((a, b) => a.priceToman - b.priceToman).slice(0, 5));
-
-        // Risk traders (margin)
-        const riskUsers: UserWithMargin[] = [];
-        let dangerCount = 0;
-        for (const trader of active.slice(0, 20)) {
+      // محاسبهٔ مارجین همهٔ تریدرها موازی، نه پشت‌سرهم
+      const margins = await Promise.all(
+        active.map(async (t): Promise<[Profile, MarginInfo | null]> => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data } = await (supabase as any).rpc('compute_user_margin', {
-            p_user_id: trader.id,
-            p_market_id: market.id,
-            p_current_price: market.mazneCurrent,
-            p_tether_rate: 97000,
+            p_user_id: t.id,
+            p_market_id: current.id,
+            p_current_price: current.mazneCurrent,
+            p_tether_rate: tetherRate,
           });
-          if (data) {
-            // RPC may return either legacy `percentage` or new `lossPercentage` —
-            // accept both to stay compatible across migrations.
-            const raw = data as unknown as {
-              percentage?: number;
-              lossPercentage?: number;
-              zone: 'safe' | 'warn' | 'call';
-            };
-            const lossPct = raw.lossPercentage ?? (100 - (raw.percentage ?? 100));
-            if (raw.zone !== 'safe') {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const profile = await (supabase as any).from('profiles').select('*').eq('id', trader.id).single();
-              if (profile.data) {
-                riskUsers.push({ profile: profile.data as Profile, margin: { percentage: lossPct, zone: raw.zone } });
-              }
-            }
-            if (raw.zone === 'call') dangerCount++;
-          }
-        }
-        setRiskTraders(riskUsers.slice(0, 8));
-        setDangerZoneCount(dangerCount);
+          if (!data) return [t, null];
+          const raw = data as { percentage?: number; loss_percentage?: number; zone: MarginInfo['zone'] };
+          const lossPct = raw.loss_percentage ?? (100 - (raw.percentage ?? 100));
+          return [t, { lossPct, zone: raw.zone }];
+        }),
+      );
+
+      const items: ActionItem[] = [];
+      for (const [profile, m] of margins) {
+        if (!m || m.zone === 'safe') continue;
+        items.push({
+          id: profile.id,
+          kind: m.zone,
+          name: profile.alias || profile.full_name,
+          detail: `زیان ودیعه ${toFa(m.lossPct.toFixed(0))}٪`,
+          profile,
+        });
       }
+      for (const p of pending) {
+        items.push({
+          id: p.id, kind: 'approval',
+          name: p.full_name,
+          detail: p.telegram_id ? `@${p.telegram_id}` : p.phone,
+          profile: p,
+        });
+      }
+      items.sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
+      setActions(items);
     } catch (err) {
       toast.error(parseError(err));
     } finally {
-      setLoadingKpis(false);
+      setLoading(false);
     }
-  }, [today]);
+  }, [today, marketId]);
 
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  useRealtime({ table: 'orders' }, () => { fetchData(); }, []);
-  useRealtime({ table: 'trades' }, () => { fetchData(); }, []);
+  useEffect(() => { void fetchData(); }, [fetchData]);
+  useRealtime({ table: 'orders' }, () => { void fetchData(); }, []);
+  useRealtime({ table: 'trades' }, () => { void fetchData(); }, []);
 
   async function handleSaveMazne() {
-    if (!activeMarket) return;
+    if (!market) return;
     const val = parseInt(mazneInput, 10);
     if (!val || val <= 0) { toast.error('مزنه نامعتبر'); return; }
     setSavingMazne(true);
     try {
-      await (supabase as any).rpc('update_mazne', { p_market_id: activeMarket.id, p_new_mazne: val });
-      setActiveMarket({ ...activeMarket, mazneCurrent: val });
-      toast.success('مزنه بروزرسانی شد');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (supabase as any).rpc('update_mazne', { p_market_id: market.id, p_new_mazne: val });
+      setMarkets((ms) => ms.map((m) => (m.id === market.id ? { ...m, mazneCurrent: val } : m)));
+      toast.success('مزنه به‌روز شد');
       setEditingMazne(false);
     } catch (err) {
       toast.error(parseError(err));
@@ -280,289 +280,362 @@ export default function AdminDashboard() {
     }
   }
 
-  const lockMins = Math.floor(lockCountdown / 60);
-  const lockSecs = lockCountdown % 60;
-  const lockLabel = `${String(lockMins).padStart(2, '0')}:${String(lockSecs).padStart(2, '0')}`;
+  const lockLabel = `${String(Math.floor(lockCountdown / 60)).padStart(2, '0')}:${String(lockCountdown % 60).padStart(2, '0')}`;
+
+  const bids = useMemo(
+    () => openOrders.filter((o) => o.side === 'buy').sort((a, b) => b.priceToman - a.priceToman).slice(0, 5),
+    [openOrders],
+  );
+  const asks = useMemo(
+    () => openOrders.filter((o) => o.side === 'sell').sort((a, b) => a.priceToman - b.priceToman).slice(0, 5),
+    [openOrders],
+  );
+  const maxDepth = useMemo(
+    () => Math.max(1, ...[...bids, ...asks].map((o) => o.remaining)),
+    [bids, asks],
+  );
+
+  /** نمودار نبض: قیمت معاملات امروز به‌ترتیب زمان */
+  const chartData = useMemo(
+    () => [...todayTrades]
+      .sort((a, b) => new Date(a.matchedAt ?? 0).getTime() - new Date(b.matchedAt ?? 0).getTime())
+      .map((t, i) => ({ i, price: t.priceToman, qty: t.quantity })),
+    [todayTrades],
+  );
+
+  const callCount = actions.filter((a) => a.kind === 'call').length;
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-5" dir="rtl">
 
-      {/* Row 1: Time + Market info */}
-      <div
-        className="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4"
-        style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
+      {/* ── نوار بالا: حال بازار ───────────────────────────────────────── */}
+      <section
+        className="rounded-2xl border px-5 py-5 sm:px-6"
+        style={{
+          // accent-surface سطح پرِ برند است (دکمهٔ اصلی) و اینجا یک تختهٔ
+          // طلایی می‌ساخت که متن رویش خوانا نبود. wash تینت ملایم آن است.
+          backgroundColor: 'var(--accent-wash)',
+          borderColor: 'var(--border-subtle)',
+        }}
       >
-        <div className="flex items-center gap-4">
-          <span
-            className="tabular-nums text-2xl font-bold"
-            style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
-          >
-            {tick ? toFa(tick.tehranTime) : '——:——:——'}
-          </span>
-          <span
-            className={cn(
-              'flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold',
-            )}
-            style={
-              isLocked
-                ? {
-                    backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 15%, transparent)',
-                    color: 'var(--semantic-danger)',
-                  }
-                : {
-                    backgroundColor: 'color-mix(in srgb, var(--semantic-success) 15%, transparent)',
-                    color: 'var(--semantic-success)',
-                  }
-            }
-          >
-            {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
-            {isLocked ? 'قفل شده' : 'باز'}
-          </span>
-          {!isLocked && lockCountdown > 0 && (
-            <span className="text-sm" style={{ color: 'var(--text-tertiary)' }}>
-              <span
-                className="tabular-nums font-semibold"
-                style={{ color: 'var(--accent-gold-bright)', fontFamily: "'Geist Mono', monospace" }}
-              >
-                {toFa(lockLabel)}
-              </span>
-              {' '}تا قفل
-            </span>
-          )}
-        </div>
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
 
-        {activeMarket && (
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-              {activeMarket.name}
-            </span>
-            <div className="flex items-center gap-1.5">
-              {editingMazne ? (
-                <>
-                  <input
-                    type="number"
-                    value={mazneInput}
-                    onChange={(e) => setMazneInput(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') void handleSaveMazne();
-                      if (e.key === 'Escape') setEditingMazne(false);
-                    }}
-                    autoFocus
-                    className="w-36 rounded-lg border bg-transparent px-2 py-1 text-sm outline-none"
-                    style={{ borderColor: 'var(--accent-gold)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
-                  />
+          {/* سمت راست (شروع RTL): بازار و مزنه */}
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              {markets.map((m) => {
+                const on = m.id === marketId;
+                return (
                   <button
+                    key={m.id}
                     type="button"
-                    onClick={() => void handleSaveMazne()}
-                    disabled={savingMazne}
-                    className="rounded p-1 transition-colors hover:bg-white/10"
-                    style={{ color: 'var(--semantic-success)' }}
+                    onClick={() => { setMarketId(m.id); setEditingMazne(false); }}
+                    className="rounded-full px-3 py-1 text-xs font-medium transition-colors"
+                    style={on
+                      ? { backgroundColor: 'var(--accent-gold)', color: 'var(--text-on-accent)' }
+                      : { color: 'var(--text-secondary)', backgroundColor: 'var(--surface-tint)' }}
                   >
-                    <Check size={14} />
+                    {m.name}
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingMazne(false)}
-                    className="rounded p-1 transition-colors hover:bg-white/10"
-                    style={{ color: 'var(--semantic-danger)' }}
-                  >
-                    <X size={14} />
-                  </button>
-                </>
-              ) : (
-                <>
-                  <span
-                    className="tabular-nums font-semibold"
-                    style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
-                  >
-                    {formatTomans(activeMarket.mazneCurrent)}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => { setMazneInput(String(activeMarket.mazneCurrent)); setEditingMazne(true); }}
-                    className="rounded p-1 transition-colors hover:bg-white/10"
-                    style={{ color: 'var(--text-tertiary)' }}
-                  >
-                    <Pencil size={13} />
-                  </button>
-                </>
-              )}
+                );
+              })}
             </div>
-          </div>
-        )}
-      </div>
 
-      {/* Row 2: KPI Cards */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <KpiCard label="تریدرهای فعال" value={activeTraders} loading={loadingKpis} />
-        <KpiCard label="حجم امروز" value={toFa(todayVolume) + ' واحد'} loading={loadingKpis} />
-        <KpiCard label="سفارش‌های باز" value={openOrdersCount} loading={loadingKpis} />
-        <KpiCard label="در محدوده خطر" value={dangerZoneCount} highlight={dangerZoneCount > 0} loading={loadingKpis} />
-      </div>
-
-      {/* Row 3: Order book mini + Risk panel */}
-      <div className="grid gap-4 md:grid-cols-2">
-        {/* Mini order book */}
-        <div
-          className="overflow-hidden rounded-xl border"
-          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-        >
-          <p className="border-b px-4 py-2.5 text-xs font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-            دفتر سفارش (top 5)
-          </p>
-          <div className="flex">
-            {/* Asks */}
-            <div className="flex-1 border-l" style={{ borderColor: 'var(--border-subtle)' }}>
-              <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--semantic-sell)' }}>فروش</p>
-              {topAsks.length === 0 ? (
-                <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>خالی</p>
-              ) : (
-                topAsks.map((o) => (
-                  <div key={o.id} className="flex justify-between px-3 py-1 text-xs">
-                    <span className="tabular-nums" style={{ color: 'var(--semantic-sell)', fontFamily: "'Geist Mono', monospace" }}>
-                      {formatTomans(o.priceToman)}
-                    </span>
-                    <span style={{ color: 'var(--text-tertiary)' }}>{toFa(o.remaining)}</span>
-                  </div>
-                ))
-              )}
-            </div>
-            {/* Bids */}
-            <div className="flex-1">
-              <p className="px-3 py-1.5 text-xs" style={{ color: 'var(--semantic-buy)' }}>خرید</p>
-              {topBids.length === 0 ? (
-                <p className="px-3 py-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>خالی</p>
-              ) : (
-                topBids.map((o) => (
-                  <div key={o.id} className="flex justify-between px-3 py-1 text-xs">
-                    <span className="tabular-nums" style={{ color: 'var(--semantic-buy)', fontFamily: "'Geist Mono', monospace" }}>
-                      {formatTomans(o.priceToman)}
-                    </span>
-                    <span style={{ color: 'var(--text-tertiary)' }}>{toFa(o.remaining)}</span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Risk panel */}
-        <div
-          className="overflow-hidden rounded-xl border"
-          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-        >
-          <p className="border-b px-4 py-2.5 text-xs font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-            تریدرهای در ریسک
-          </p>
-          {riskTraders.length === 0 ? (
-            <p className="px-4 py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              همه تریدرها در وضعیت سالم هستند
+            <p className="mb-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
+              مزنهٔ جاری
             </p>
-          ) : (
-            <div className="divide-y" style={{ '--divide-color': 'var(--border-subtle)' } as React.CSSProperties}>
-              {riskTraders.map((u) => (
-                <div key={u.profile.id} className="flex items-center justify-between px-4 py-2.5">
-                  <span className="text-sm" style={{ color: 'var(--text-primary)' }}>{u.profile.full_name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="tabular-nums text-xs" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
-                      {toFa(u.margin.percentage.toFixed(1))}٪
-                    </span>
-                    <ZoneBadge zone={u.margin.zone} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Row 4: Recent trades */}
-      <div
-        className="overflow-hidden rounded-xl border"
-        style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-      >
-        <p className="border-b px-4 py-2.5 text-xs font-semibold" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
-          آخرین معاملات
-        </p>
-        {recentTrades.length === 0 ? (
-          <p className="px-4 py-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>معامله‌ای ثبت نشده</p>
-        ) : (
-          <div className="divide-y" style={{ '--divide-color': 'var(--border-subtle)' } as React.CSSProperties}>
-            {recentTrades.map((t) => (
-              <div key={t.id} className="flex items-center justify-between px-4 py-2.5 text-xs">
-                <span className="tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
-                  {formatTomans(t.priceToman)}
-                </span>
-                <span style={{ color: 'var(--text-secondary)' }}>{toFa(t.quantity)} واحد</span>
-                <span style={{ color: 'var(--text-tertiary)' }}>
-                  {toFa(new Date(t.matchedAt).toLocaleTimeString('fa-IR', { timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit' }))}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Row 5: Pending approvals */}
-      {pendingTraders.length > 0 && (
-        <div>
-          <p className="mb-3 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-            در انتظار تأیید ({toFa(pendingTraders.length)})
-          </p>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {pendingTraders.map((pt) => (
-              <div
-                key={pt.id}
-                className="rounded-xl border p-4"
-                style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-              >
-                <div className="mb-3 flex items-center gap-3">
-                  <div
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-bold"
-                    style={{
-                      backgroundColor: 'color-mix(in srgb, var(--accent-gold) 15%, transparent)',
-                      color: 'var(--accent-gold)',
-                    }}
-                  >
-                    {pt.full_name[0]}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{pt.full_name}</p>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>{toFa(pt.phone)}</p>
-                  </div>
-                </div>
-                {pt.telegram_id && (
-                  <p className="mb-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                    @{pt.telegram_id}
-                  </p>
-                )}
-                <p className="mb-3 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                  ثبت‌نام: {toFa(new Date(pt.created_at).toLocaleDateString('fa-IR', { timeZone: 'Asia/Tehran' }))}
-                </p>
+            {editingMazne ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={mazneInput}
+                  onChange={(e) => setMazneInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') void handleSaveMazne();
+                    if (e.key === 'Escape') setEditingMazne(false);
+                  }}
+                  autoFocus
+                  className="w-44 rounded-lg border bg-transparent px-3 py-1.5 text-lg outline-none tabular-nums"
+                  style={{ borderColor: 'var(--accent-gold)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                />
                 <button
-                  type="button"
-                  onClick={() => setApproveTrader(pt)}
-                  className="w-full rounded-lg py-1.5 text-xs font-semibold transition-opacity hover:opacity-80"
-                  style={{ backgroundColor: 'var(--semantic-success)', color: '#000' }}
+                  type="button" onClick={() => void handleSaveMazne()} disabled={savingMazne}
+                  className="rounded-lg p-2 transition-colors hover:bg-[var(--surface-tint-strong)]"
+                  style={{ color: 'var(--semantic-success)' }}
+                  aria-label="ذخیرهٔ مزنه"
                 >
-                  تأیید
+                  <Check size={16} />
+                </button>
+                <button
+                  type="button" onClick={() => setEditingMazne(false)}
+                  className="rounded-lg p-2 transition-colors hover:bg-[var(--surface-tint-strong)]"
+                  style={{ color: 'var(--semantic-danger)' }}
+                  aria-label="انصراف"
+                >
+                  <X size={16} />
                 </button>
               </div>
-            ))}
+            ) : (
+              <button
+                type="button"
+                onClick={() => { setMazneInput(String(market?.mazneCurrent ?? '')); setEditingMazne(true); }}
+                className="group flex items-baseline gap-2 text-right"
+                title="ویرایش مزنه"
+              >
+                <span
+                  className="text-3xl font-bold tabular-nums sm:text-4xl"
+                  style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                >
+                  {market ? toFa(market.mazneCurrent.toLocaleString('en-US')) : '—'}
+                </span>
+                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>تومان</span>
+                <Pencil
+                  size={13}
+                  className="opacity-0 transition-opacity group-hover:opacity-100"
+                  style={{ color: 'var(--text-tertiary)' }}
+                />
+              </button>
+            )}
+          </div>
+
+          {/* سمت چپ: تاریخ و وضعیت قفل.
+              ساعت اینجا تکرار نمی‌شود — نوار بالای پوسته آن را در همهٔ
+              صفحه‌ها نشان می‌دهد و دو ساعت کنار هم فقط شلوغی بود. */}
+          <div className="text-left">
+            <p className="mb-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{longDate()}</p>
+            <span
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
+              style={isLocked
+                ? { backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 15%, transparent)', color: 'var(--semantic-danger)' }
+                : { backgroundColor: 'color-mix(in srgb, var(--semantic-success) 15%, transparent)', color: 'var(--semantic-success)' }}
+            >
+              {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
+              {isLocked ? 'بازار قفل است' : `${toFa(lockLabel)} تا قفل`}
+            </span>
           </div>
         </div>
-      )}
+      </section>
 
-      {/* Approve modal */}
+      {/* ── نیاز به رسیدگی + نبض امروز ─────────────────────────────────── */}
+      <div className="grid gap-5 lg:grid-cols-5">
+
+        {/* فهرست کارها — ستون پهن‌تر، چون مهم‌ترین بخش صفحه است */}
+        <section
+          className="overflow-hidden rounded-2xl border lg:col-span-3"
+          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
+        >
+          <header className="flex items-center justify-between px-5 py-3.5">
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+              نیاز به رسیدگی
+            </h2>
+            {actions.length > 0 && (
+              <span
+                className="rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
+                style={callCount > 0
+                  ? { backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 15%, transparent)', color: 'var(--semantic-danger)' }
+                  : { backgroundColor: 'var(--surface-tint-strong)', color: 'var(--text-secondary)' }}
+              >
+                {toFa(actions.length)}
+              </span>
+            )}
+          </header>
+
+          {loading ? (
+            <div className="space-y-2 px-5 pb-5">
+              {[0, 1, 2].map((i) => <div key={i} className="skeleton-shimmer h-11 rounded-lg" />)}
+            </div>
+          ) : actions.length === 0 ? (
+            <p className="px-5 pb-6 pt-2 text-sm" style={{ color: 'var(--text-tertiary)' }}>
+              چیزی روی میز نیست — همهٔ تریدرها سالم‌اند و درخواست عضویتی در صف نیست.
+            </p>
+          ) : (
+            <ul>
+              {actions.slice(0, 7).map((a) => {
+                const s = KIND_STYLE[a.kind];
+                return (
+                  <li key={`${a.kind}-${a.id}`}>
+                    <button
+                      type="button"
+                      onClick={() => { if (a.kind === 'approval') setApproveTrader(a.profile); }}
+                      className="flex w-full items-center gap-3 border-t px-5 py-3 text-right transition-colors hover:bg-[var(--surface-tint)]"
+                      style={{ borderColor: 'var(--border-subtle)' }}
+                    >
+                      <span
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 14%, transparent)`, color: s.color }}
+                      >
+                        {a.kind === 'approval' ? <UserPlus size={14} /> : <TrendingDown size={14} />}
+                      </span>
+
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                          {a.name}
+                        </span>
+                        <span className="block truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                          {a.detail}
+                        </span>
+                      </span>
+
+                      <span
+                        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 14%, transparent)`, color: s.color }}
+                      >
+                        {s.label}
+                      </span>
+                      <ChevronLeft size={15} style={{ color: 'var(--text-tertiary)' }} />
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* نبض امروز */}
+        <section
+          className="flex flex-col overflow-hidden rounded-2xl border lg:col-span-2"
+          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
+        >
+          <header className="px-5 pt-3.5">
+            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>نبض امروز</h2>
+          </header>
+
+          <div className="h-28 px-2 pt-2">
+            {chartData.length < 2 ? (
+              <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
+                هنوز معامله‌ای ثبت نشده
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
+                  <defs>
+                    <linearGradient id="pulseFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--accent-gold)" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="var(--accent-gold)" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <YAxis hide domain={['dataMin', 'dataMax']} />
+                  <Tooltip
+                    cursor={{ stroke: 'var(--border-strong)' }}
+                    contentStyle={{
+                      backgroundColor: 'var(--bg-overlay)',
+                      border: '1px solid var(--border-strong)',
+                      borderRadius: 10,
+                      fontSize: 12,
+                      direction: 'rtl',
+                    }}
+                    labelFormatter={() => ''}
+                    formatter={(v) => [formatTomans(Number(v ?? 0)), 'قیمت']}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="price"
+                    stroke="var(--accent-gold)"
+                    strokeWidth={2}
+                    fill="url(#pulseFill)"
+                    isAnimationActive={false}
+                    dot={false}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <dl className="mt-auto grid grid-cols-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
+            {[
+              { label: 'حجم امروز', value: `${toFa(todayVolume)} واحد` },
+              { label: 'تریدر فعال', value: toFa(activeTraders) },
+              { label: 'لفظ باز', value: toFa(openOrders.length) },
+              { label: 'در حراج', value: toFa(callCount), danger: callCount > 0 },
+            ].map((s, i) => (
+              <div
+                key={s.label}
+                className="px-5 py-3"
+                style={{
+                  borderColor: 'var(--border-subtle)',
+                  borderTopWidth: i > 1 ? 1 : 0,
+                  borderLeftWidth: i % 2 === 0 ? 1 : 0,
+                }}
+              >
+                <dt className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{s.label}</dt>
+                <dd
+                  className="mt-0.5 text-base font-bold tabular-nums"
+                  style={{
+                    color: s.danger ? 'var(--semantic-danger)' : 'var(--text-primary)',
+                    fontFamily: "'Geist Mono', monospace",
+                  }}
+                >
+                  {s.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      </div>
+
+      {/* ── دفتر لفظ ───────────────────────────────────────────────────── */}
+      <section
+        className="overflow-hidden rounded-2xl border"
+        style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
+      >
+        <header className="flex items-baseline justify-between px-5 py-3.5">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>دفتر لفظ</h2>
+          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>پنج ردیف نزدیک به مزنه</span>
+        </header>
+
+        <div className="grid sm:grid-cols-2">
+          {([
+            { rows: asks, side: 'فروش', color: 'var(--semantic-sell)' },
+            { rows: bids, side: 'خرید', color: 'var(--semantic-buy)' },
+          ] as const).map((col, ci) => (
+            <div
+              key={col.side}
+              className="border-t"
+              style={{
+                borderColor: 'var(--border-subtle)',
+                borderLeftWidth: ci === 0 ? 1 : 0,
+              }}
+            >
+              <p className="px-5 py-2 text-xs font-semibold" style={{ color: col.color }}>{col.side}</p>
+              {col.rows.length === 0 ? (
+                <p className="px-5 pb-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>خالی</p>
+              ) : (
+                col.rows.map((o) => (
+                  <div key={o.id} className="relative flex items-center justify-between px-5 py-1.5">
+                    {/* نوار عمق: پهنا نسبت مستقیم با حجم باقی‌مانده دارد */}
+                    <span
+                      className="pointer-events-none absolute inset-y-0 right-0"
+                      style={{
+                        width: `${(o.remaining / maxDepth) * 100}%`,
+                        backgroundColor: `color-mix(in srgb, ${col.color} 9%, transparent)`,
+                      }}
+                    />
+                    <span
+                      className="relative tabular-nums text-xs"
+                      style={{ color: col.color, fontFamily: "'Geist Mono', monospace" }}
+                    >
+                      {toFa(o.priceToman.toLocaleString('en-US'))}
+                    </span>
+                    <span className="relative text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>
+                      {toFa(o.remaining)}
+                    </span>
+                  </div>
+                ))
+              )}
+              <div className="pb-3" />
+            </div>
+          ))}
+        </div>
+      </section>
+
       {approveTrader && (
         <ApproveModal
           trader={approveTrader}
           onClose={() => setApproveTrader(null)}
-          onApproved={fetchData}
+          onApproved={() => void fetchData()}
         />
       )}
     </div>
   );
 }
-
-

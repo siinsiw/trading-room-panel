@@ -160,8 +160,8 @@ export default function ResetPasswordPage() {
             role="alert"
             style={{
               color: 'var(--semantic-danger)',
-              backgroundColor: 'rgba(239,68,68,0.08)',
-              border: '1px solid rgba(239,68,68,0.2)',
+              backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 8%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--semantic-danger) 20%, transparent)',
             }}
           >
             {serverError}
@@ -176,7 +176,7 @@ export default function ResetPasswordPage() {
             'w-full py-2.5 rounded-lg font-bold text-sm transition-opacity',
             isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90',
           )}
-          style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+          style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
         >
           {isSubmitting ? (
             <span className="flex items-center justify-center gap-2">

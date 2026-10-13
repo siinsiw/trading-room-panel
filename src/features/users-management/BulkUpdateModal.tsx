@@ -64,7 +64,7 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
     try {
       const args: Record<string, unknown> = { p_user_ids: userIds };
       if (t.perUnit)         args.p_per_unit_deposit       = parseFloat(perUnit);
-      if (t.commission)      args.p_commission_per_unit    = parseInt(commission, 10);
+      if (t.commission)      args.p_commission_per_unit    = parseFloat(commission);
       if (t.maxUnits)        args.p_max_open_units         = maxUnits === '' ? null : parseInt(maxUnits, 10);
       if (t.memberGroup)     args.p_member_group_id        = memberGroupId || null;
       if (t.referralBonus)   args.p_referral_bonus_pct     = parseFloat(referralBonus);
@@ -121,8 +121,8 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex items-start sm:items-center justify-center p-3 sm:p-4 overflow-y-auto"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -140,7 +140,7 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
               فقط فیلدهایی که تیک می‌زنید روی همهٔ کاربران انتخاب‌شده اعمال می‌شوند.
             </p>
           </div>
-          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-white/5" style={{ color: 'var(--text-tertiary)' }}>
+          <button type="button" onClick={onClose} className="rounded p-1 hover:bg-[var(--surface-tint)]" style={{ color: 'var(--text-tertiary)' }}>
             <X size={18} />
           </button>
         </div>
@@ -165,8 +165,8 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
               <input type="number" inputMode="decimal" value={perUnit}    onChange={(e) => setPerUnit(e.target.value)}    placeholder="مثلاً 200" className={inputCls} style={inputStyle} />
             </FieldRow>
 
-            <FieldRow enabled={t.commission}   onToggle={() => setT({ ...t, commission: !t.commission })} label="کمیسیون هر واحد (تومان)">
-              <input type="number" inputMode="numeric" value={commission} onChange={(e) => setCommission(e.target.value)} placeholder="مثلاً 50000" className={inputCls} style={inputStyle} />
+            <FieldRow enabled={t.commission}   onToggle={() => setT({ ...t, commission: !t.commission })} label="کمیسیون هر واحد (USDT)">
+              <input type="number" inputMode="numeric" value={commission} onChange={(e) => setCommission(e.target.value)} placeholder="مثلاً 1" className={inputCls} style={inputStyle} />
             </FieldRow>
 
             <FieldRow enabled={t.maxUnits}     onToggle={() => setT({ ...t, maxUnits: !t.maxUnits })}    label="سقف موقعیت باز (واحد)">
@@ -189,11 +189,11 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
             <FieldRow enabled={t.active}       onToggle={() => setT({ ...t, active: !t.active })}        label="وضعیت فعال/غیرفعال">
               <div className="flex gap-2">
                 <button type="button" onClick={() => setActive(true)}  className="flex-1 rounded-md border py-1.5 text-xs"
-                  style={active ? { backgroundColor: 'var(--semantic-success)', color: '#000', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                  style={active ? { backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                   فعال
                 </button>
                 <button type="button" onClick={() => setActive(false)} className="flex-1 rounded-md border py-1.5 text-xs"
-                  style={!active ? { backgroundColor: 'var(--semantic-danger)', color: '#fff', borderColor: 'var(--semantic-danger)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                  style={!active ? { backgroundColor: 'var(--semantic-danger)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-danger)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                   غیرفعال
                 </button>
               </div>
@@ -202,11 +202,11 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
             <FieldRow enabled={t.isCredit}     onToggle={() => setT({ ...t, isCredit: !t.isCredit })}    label="نوع حساب">
               <div className="flex gap-2">
                 <button type="button" onClick={() => setIsCredit(false)} className="flex-1 rounded-md border py-1.5 text-xs"
-                  style={!isCredit ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                  style={!isCredit ? { backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-surface)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                   ودیعه‌ای
                 </button>
                 <button type="button" onClick={() => setIsCredit(true)} className="flex-1 rounded-md border py-1.5 text-xs"
-                  style={isCredit ? { backgroundColor: 'var(--accent-gold)', color: '#000', borderColor: 'var(--accent-gold)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                  style={isCredit ? { backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)', borderColor: 'var(--accent-surface)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                   اعتباری
                 </button>
               </div>
@@ -219,11 +219,11 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
             <FieldRow enabled={t.marginDisabled} onToggle={() => setT({ ...t, marginDisabled: !t.marginDisabled })} label="حراج خودکار (کال مارجین)">
               <div className="flex gap-2">
                 <button type="button" onClick={() => setMarginDisabled(false)} className="flex-1 rounded-md border py-1.5 text-xs"
-                  style={!marginDisabled ? { backgroundColor: 'var(--semantic-success)', color: '#000', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                  style={!marginDisabled ? { backgroundColor: 'var(--semantic-success)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-success)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                   فعال
                 </button>
                 <button type="button" onClick={() => setMarginDisabled(true)} className="flex-1 rounded-md border py-1.5 text-xs"
-                  style={marginDisabled ? { backgroundColor: 'var(--semantic-warn)', color: '#000', borderColor: 'var(--semantic-warn)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
+                  style={marginDisabled ? { backgroundColor: 'var(--semantic-warn)', color: 'var(--bg-elevated)', borderColor: 'var(--semantic-warn)' } : { color: 'var(--text-secondary)', borderColor: 'var(--border-subtle)' }}>
                   غیرفعال
                 </button>
               </div>
@@ -236,7 +236,7 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-white/5 disabled:opacity-40"
+            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40"
             style={{ color: 'var(--text-secondary)' }}
           >
             انصراف
@@ -246,7 +246,7 @@ export function BulkUpdateModal({ userIds, onClose, onSaved }: Props) {
             onClick={() => void handleApply()}
             disabled={saving}
             className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50 hover:opacity-90"
-            style={{ backgroundColor: 'var(--accent-gold)', color: '#000' }}
+            style={{ backgroundColor: 'var(--accent-surface)', color: 'var(--text-on-accent)' }}
           >
             {saving ? 'در حال اعمال…' : `اعمال روی ${toFa(userIds.length)} کاربر`}
           </button>

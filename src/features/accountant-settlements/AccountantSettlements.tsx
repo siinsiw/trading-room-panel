@@ -31,8 +31,8 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
 
   return (
     <div
-      className="fixed inset-0 z-50 flex"
-      style={{ backgroundColor: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}
+      className="fixed inset-0 z-[70] flex"
+      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
       onClick={onClose}
     >
       <div
@@ -46,7 +46,9 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
             <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>جزئیات تصفیه</p>
             <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{toFa(settlement.settlementDate)}</p>
           </div>
-          <button type="button" onClick={onClose} style={{ color: 'var(--text-tertiary)' }}>
+          <button type="button" onClick={onClose} aria-label="بستن"
+            className="-me-2 flex h-11 w-11 items-center justify-center rounded-lg"
+            style={{ color: 'var(--text-tertiary)' }}>
             <X size={18} />
           </button>
         </div>
@@ -59,7 +61,7 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
               { label: 'نرخ تتر', value: formatTomans(settlement.rateTether) },
               { label: 'تعداد معاملات', value: toFa(settlement.totalTradesCount) },
               { label: 'حجم کل', value: toFa(settlement.totalVolumeUnits) + ' واحد' },
-              { label: 'کمیسیون کل', value: formatTomans(settlement.totalCommissionToman) },
+              { label: 'کمیسیون کل', value: formatTether(settlement.totalCommissionTether) },
               { label: 'وضعیت', value: settlement.reversedAt ? 'برگشت خورده' : 'فعال' },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-lg p-3" style={{ backgroundColor: 'var(--bg-overlay)' }}>
@@ -88,7 +90,7 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
                   </thead>
                   <tbody>
                     {snapshot.map((row, i) => (
-                      <tr key={i} className="border-t hover:bg-white/5" style={{ borderColor: 'var(--border-subtle)' }}>
+                      <tr key={i} className="border-t hover:bg-[var(--surface-tint)]" style={{ borderColor: 'var(--border-subtle)' }}>
                         <td className="px-3 py-2 font-mono text-[10px]" style={{ color: 'var(--text-tertiary)' }}>
                           {String(row.userId ?? '').slice(-6)}
                         </td>
@@ -159,11 +161,11 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
                   { label: 'نرخ تتر',       value: settlement.rateTether.toLocaleString('fa-IR') },
                   { label: 'تعداد معاملات', value: settlement.totalTradesCount.toLocaleString('fa-IR') },
                   { label: 'حجم کل',        value: settlement.totalVolumeUnits.toLocaleString('fa-IR') + ' واحد' },
-                  { label: 'کمیسیون کل',    value: settlement.totalCommissionToman.toLocaleString('fa-IR') + ' تومان' },
+                  { label: 'کمیسیون کل',    value: settlement.totalCommissionTether.toLocaleString('fa-IR') + ' تتر' },
                   { label: 'زمان اعمال',    value: new Date(settlement.appliedAt).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' }) },
                 ],
               })}
-              className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5"
+              className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)]"
               style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
             >
               <Printer size={13} /> PDF این تصفیه
@@ -200,7 +202,7 @@ export default function AccountantSettlements() {
     { key: 'rateTether', header: 'نرخ تتر', format: (s) => s.rateTether },
     { key: 'totalTradesCount', header: 'تعداد معاملات', format: (s) => s.totalTradesCount },
     { key: 'totalVolumeUnits', header: 'حجم کل (واحد)', format: (s) => s.totalVolumeUnits },
-    { key: 'totalCommissionToman', header: 'کمیسیون کل (تومان)', format: (s) => s.totalCommissionToman },
+    { key: 'totalCommissionTether', header: 'کمیسیون کل (USDT)', format: (s) => s.totalCommissionTether },
     { key: 'appliedAt', header: 'زمان اعمال', format: (s) => new Date(s.appliedAt).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' }) },
     { key: 'reversedAt', header: 'وضعیت', format: (s) => s.reversedAt ? `برگشت — ${s.reversalReason ?? ''}` : 'فعال' },
   ];
@@ -217,7 +219,7 @@ export default function AccountantSettlements() {
       '',
       settlements.reduce((s, x) => s + x.totalTradesCount, 0),
       settlements.reduce((s, x) => s + x.totalVolumeUnits, 0),
-      settlements.reduce((s, x) => s + x.totalCommissionToman, 0),
+      settlements.reduce((s, x) => s + x.totalCommissionTether, 0),
       '',
       '',
     ]],
@@ -232,9 +234,9 @@ export default function AccountantSettlements() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>تصفیه‌ها</h1>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={onCSV}   disabled={settlements.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
-          <button type="button" onClick={onExcel} disabled={settlements.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
-          <button type="button" onClick={onPdf}   disabled={settlements.length === 0} className="flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-white/5 disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
+          <button type="button" onClick={onCSV}   disabled={settlements.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileText size={13}/>CSV</button>
+          <button type="button" onClick={onExcel} disabled={settlements.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><FileSpreadsheet size={13}/>اکسل</button>
+          <button type="button" onClick={onPdf}   disabled={settlements.length === 0} className="flex min-h-11 items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium hover:bg-[var(--surface-tint)] disabled:opacity-40" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}><Printer size={13}/>PDF</button>
         </div>
       </div>
 
@@ -270,7 +272,7 @@ export default function AccountantSettlements() {
                 {settlements.map((s) => (
                   <tr
                     key={s.id}
-                    className="cursor-pointer border-t hover:bg-white/5 transition-colors"
+                    className="cursor-pointer border-t hover:bg-[var(--surface-tint)] transition-colors"
                     style={{ borderColor: 'var(--border-subtle)' }}
                     onClick={() => setSelected(s)}
                   >
@@ -286,7 +288,7 @@ export default function AccountantSettlements() {
                     <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>{toFa(s.totalTradesCount)}</td>
                     <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>{toFa(s.totalVolumeUnits)}</td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                      {formatTomans(s.totalCommissionToman)}
+                      {formatTether(s.totalCommissionTether)}
                     </td>
                     <td className="px-4 py-2.5">
                       <span
