@@ -137,14 +137,18 @@ export function printPdfReport(args: {
     .map((m) => `<div><span class="lbl">${escape(m.label)}:</span> <span>${escape(m.value)}</span></div>`)
     .join('');
 
+  // پنجرهٔ چاپ سند جداست و قلم‌های پنل را نمی‌بیند — نازنین با آدرس کامل
+  const fontBase = `${window.location.origin}/fonts/woff2`;
   const html = `<!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
 <title>${escape(args.title)}</title>
 <style>
+  @font-face { font-family: 'Nazanin'; font-weight: 100 500; src: url('${fontBase}/IRNazanin-Regular.woff2') format('woff2'); size-adjust: 116%; }
+  @font-face { font-family: 'Nazanin'; font-weight: 600 900; src: url('${fontBase}/IRNazanin-Bold.woff2') format('woff2'); size-adjust: 116%; }
   @page { size: A4; margin: 14mm; }
-  body { font-family: Vazirmatn, "YekanBakh FaNum", Tahoma, sans-serif; font-size: 11pt; color: #111; }
+  body { font-family: 'Nazanin', Tahoma, serif; font-size: 11pt; color: #111; }
   h1 { font-size: 16pt; margin: 0 0 6pt; text-align: center; }
   .subtitle { text-align: center; color: #555; margin: 0 0 10pt; font-size: 10pt; }
   .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 4pt 14pt; margin-bottom: 10pt; font-size: 10pt; }
@@ -167,7 +171,8 @@ export function printPdfReport(args: {
   </table>
   <p class="footer">تولید‌شده توسط پنل اتاق معاملات تی‌تی · ${new Date().toLocaleString('fa-IR', { timeZone: 'Asia/Tehran' })}</p>
   <script>
-    window.addEventListener('load', () => { setTimeout(() => window.print(), 200); });
+    // چاپ بعد از لود قلم، وگرنه صفحهٔ اول با Tahoma چاپ می‌شود
+    window.addEventListener('load', () => { document.fonts.ready.then(() => setTimeout(() => window.print(), 150)); });
   </script>
 </body>
 </html>`;
