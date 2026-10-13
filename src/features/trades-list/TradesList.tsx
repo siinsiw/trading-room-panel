@@ -376,7 +376,7 @@ export default function TradesList() {
                         style={{ borderColor: 'var(--border-subtle)' }}
                         onClick={() => setSelected(t)}
                       >
-                        <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+                        <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                           {toFa(new Date(t.matched_at).toLocaleTimeString('fa-IR', {
                             timeZone: 'Asia/Tehran', hour: '2-digit', minute: '2-digit',
                           }))}
@@ -390,7 +390,7 @@ export default function TradesList() {
                         <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>
                           {toFa(t.quantity)}
                         </td>
-                        <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+                        <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                           {formatTomans(t.price_toman)}
                         </td>
                         <td className="px-3 py-2.5">

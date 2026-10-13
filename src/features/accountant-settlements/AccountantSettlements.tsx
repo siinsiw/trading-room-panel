@@ -66,7 +66,7 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
             ].map(({ label, value }) => (
               <div key={label} className="rounded-lg p-3" style={{ backgroundColor: 'var(--bg-overlay)' }}>
                 <p className="text-xs mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
-                <p className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+                <p className="text-sm font-semibold tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                   {value}
                 </p>
               </div>
@@ -104,7 +104,7 @@ function SettlementDrawer({ settlement, onClose }: { settlement: Settlement; onC
                           className="px-3 py-2 tabular-nums font-medium"
                           style={{
                             color: Number(row.pnL ?? 0) >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)',
-                            fontFamily: "'Geist Mono', monospace",
+                            fontFamily: 'var(--font-num)',
                           }}
                         >
                           {row.pnL != null ? (Number(row.pnL) >= 0 ? '+' : '') + formatTomans(Number(row.pnL)) : '—'}
@@ -276,10 +276,10 @@ export default function AccountantSettlements() {
                     style={{ borderColor: 'var(--border-subtle)' }}
                     onClick={() => setSelected(s)}
                   >
-                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                       {toFa(s.settlementDate)}
                     </td>
-                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                       {formatTomans(s.rateToman)}
                     </td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>

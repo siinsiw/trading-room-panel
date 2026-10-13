@@ -46,7 +46,8 @@ const ROUTES = {
   // نقش trader از پنل برداشته شد (۲۰۲۶-۰۹-۲۲) — معامله فقط در تلگرام.
 };
 
-const THEMES = ['light', 'dark'];
+// تم تیره از ۲۰۲۶-۱۰-۱۳ برداشته شد — فقط روشن
+const THEMES = ['light'];
 const VPS = ['desktop', 'laptop', 'tablet', 'mobile'];
 
 function arg(flag, fallback = null) {

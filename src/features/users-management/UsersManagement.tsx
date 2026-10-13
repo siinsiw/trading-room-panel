@@ -644,7 +644,7 @@ export default function UsersManagement() {
                           </td>
                           <td
                             className="px-4 py-3 tabular-nums truncate"
-                            style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace", textAlign: 'right' }}
+                            style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)', textAlign: 'right' }}
                           >
                             {toFa(p.phone)}
                           </td>

@@ -1,176 +1,50 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { toFa, formatTomans } from '@/lib/persian';
+import { Check, Pencil, X, ArrowUp, ArrowDown } from 'lucide-react';
+import { money, toFa } from '@/lib/persian';
 import { parseError } from '@/lib/errors';
+import { tehranMinute, todayJalaliKey } from '@/lib/jalali';
+import { gsap, useGSAP } from '@/lib/gsap';
 import { useTimeStore } from '@/stores/time.store';
 import { useRealtime } from '@/hooks/useRealtime';
 import { repos } from '@/data/repositories/index';
 import { supabase } from '@/lib/supabase';
-import { AreaChart, Area, ResponsiveContainer, YAxis, Tooltip } from 'recharts';
+import { GlassCard, CardHeader } from '@/ui/primitives/GlassCard';
+import { SegmentedControl } from '@/ui/compounds/SegmentedControl';
+import { Odometer } from '@/ui/compounds/Odometer';
+import { CountUp } from '@/ui/compounds/CountUp';
+import { SemiGauge } from '@/ui/compounds/SemiGauge';
+import { PriceChart } from '@/ui/compounds/PriceChart';
+import { AttentionList, ApproveModal, OrderLadder, RecentTrades, type ActionItem } from './parts';
 
 import type { Market, Order, Trade } from '@/domain/types';
 import type { Profile } from '@/lib/database.types';
-import { Lock, Unlock, Pencil, Check, X, ChevronLeft, UserPlus, TrendingDown } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // داشبورد روی سه سؤال ساخته شده، نه روی «هرچه داریم را نشان بده»:
-//   ۱. بازار در چه حالی است؟      → نوار بالا (مزنه بزرگ‌ترین عدد صفحه)
-//   ۲. چه چیزی کار من را می‌خواهد؟ → فهرست «نیاز به رسیدگی»
-//   ۳. امروز چطور گذشت؟           → نبض امروز (نمودار + چهار عدد)
-// بقیه چیزها صفحهٔ اختصاصی خودشان را دارند و اینجا تکرار نمی‌شوند.
+//   ۱. بازار در چه حالی است؟      → کارت بزرگ: مزنه + روند قیمت امروز
+//   ۲. چه چیزی کار من را می‌خواهد؟ → سلامت ودیعه‌ها + «نیاز به رسیدگی»
+//   ۳. امروز چطور گذشت؟           → آخرین معاملات، دفتر لفظ، برنامهٔ روز
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface MarginInfo { lossPct: number; zone: 'safe' | 'warn' | 'call' }
 
-/** یک کار روی میز مدیر — همه در یک فهرست، مرتب‌شده بر اساس فوریت */
-interface ActionItem {
-  id: string;
-  kind: 'call' | 'warn' | 'approval';
-  name: string;
-  detail: string;
-  profile: Profile;
-}
-
 const KIND_ORDER: Record<ActionItem['kind'], number> = { call: 0, warn: 1, approval: 2 };
 
-const KIND_STYLE: Record<ActionItem['kind'], { color: string; label: string }> = {
-  call:     { color: 'var(--semantic-danger)',  label: 'حراج' },
-  warn:     { color: 'var(--semantic-warn)',    label: 'هشدار' },
-  approval: { color: 'var(--text-tertiary)',    label: 'عضویت' },
-};
-
-// ─── تاریخ ───────────────────────────────────────────────────────────────────
-
-function jalaliParts() {
-  const fmt = new Intl.DateTimeFormat('fa-IR', {
-    timeZone: 'Asia/Tehran', calendar: 'persian', numberingSystem: 'latn',
-    year: 'numeric', month: '2-digit', day: '2-digit',
-  });
-  const p = fmt.formatToParts(new Date());
-  const get = (t: string) => p.find((x) => x.type === t)?.value ?? '';
-  return { y: get('year'), m: get('month'), d: get('day') };
-}
-
-function getTodayJalali(): string {
-  const { y, m, d } = jalaliParts();
-  return `${y}/${m}/${d}`;
-}
-
-const MONTHS = [
-  'فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور',
-  'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند',
-];
-
-function longDate(): string {
-  const { y, m, d } = jalaliParts();
-  const weekday = new Intl.DateTimeFormat('fa-IR', {
-    timeZone: 'Asia/Tehran', weekday: 'long',
-  }).format(new Date());
-  return `${weekday} ${toFa(Number(d))} ${MONTHS[Number(m) - 1] ?? ''} ${toFa(y)}`;
-}
-
-// ─── مودال تأیید تریدر ───────────────────────────────────────────────────────
-
-function ApproveModal({ trader, onClose, onApproved }: {
-  trader: Profile; onClose: () => void; onApproved: () => void;
-}) {
-  const [deposit, setDeposit] = useState('');
-  const [perUnit, setPerUnit] = useState('500');
-  const [commission, setCommission] = useState('1');
-  const [loading, setLoading] = useState(false);
-
-  async function handleApprove() {
-    const dep = parseFloat(deposit);
-    if (!dep || dep <= 0) { toast.error('ودیعه را وارد کنید'); return; }
-    setLoading(true);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any).rpc('approve_trader', {
-        p_trader_id: trader.id,
-        p_deposit: dep,
-        p_per_unit_deposit: parseFloat(perUnit),
-        p_commission: parseFloat(commission),
-      });
-      toast.success(`${trader.full_name} تأیید شد`);
-      onApproved();
-      onClose();
-    } catch (err) {
-      toast.error(parseError(err));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
-      style={{ backgroundColor: 'var(--modal-scrim)', backdropFilter: 'blur(4px)' }}
-      onClick={onClose}
-    >
-      <div
-        className="w-full max-w-md rounded-2xl border p-6 shadow-2xl"
-        style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-strong)' }}
-        onClick={(e) => e.stopPropagation()}
-        dir="rtl"
-      >
-        <h3 className="mb-1 text-base font-semibold" style={{ color: 'var(--text-primary)' }}>
-          تأیید {trader.full_name}
-        </h3>
-        <p className="mb-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-          بعد از تأیید، کاربر می‌تواند در گروه لفظ بزند.
-        </p>
-        <div className="space-y-3">
-          {[
-            { label: 'ودیعه (تتر)', value: deposit, setter: setDeposit, placeholder: '۵۰۰۰' },
-            { label: 'بیعانهٔ هر واحد (تتر)', value: perUnit, setter: setPerUnit, placeholder: '۵۰۰' },
-            { label: 'کمیسیون هر واحد (تتر)', value: commission, setter: setCommission, placeholder: '۱' },
-          ].map((f) => (
-            <div key={f.label}>
-              <label className="mb-1 block text-xs" style={{ color: 'var(--text-secondary)' }}>{f.label}</label>
-              <input
-                type="number"
-                value={f.value}
-                onChange={(e) => f.setter(e.target.value)}
-                placeholder={f.placeholder}
-                className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)' }}
-              />
-            </div>
-          ))}
-        </div>
-        <div className="mt-5 flex gap-3">
-          <button
-            type="button" onClick={onClose}
-            className="flex-1 rounded-lg py-2 text-sm font-medium hover:bg-[var(--surface-tint)]"
-            style={{ color: 'var(--text-secondary)' }}
-          >
-            انصراف
-          </button>
-          <button
-            type="button" onClick={() => void handleApprove()} disabled={loading}
-            className="flex-1 rounded-lg py-2 text-sm font-bold disabled:opacity-50"
-            style={{ backgroundColor: 'var(--semantic-success)', color: 'var(--text-on-accent)' }}
-          >
-            {loading ? 'در حال ثبت…' : 'تأیید'}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── صفحه ────────────────────────────────────────────────────────────────────
-
 export default function AdminDashboard() {
-  const { isLocked, lockCountdown } = useTimeStore();
+  const navigate = useNavigate();
+  const { tick, isLocked } = useTimeStore();
+  const root = useRef<HTMLDivElement>(null);
 
   const [markets, setMarkets] = useState<Market[]>([]);
   const [marketId, setMarketId] = useState<string | null>(null);
-  const [activeTraders, setActiveTraders] = useState(0);
-  const [todayVolume, setTodayVolume] = useState(0);
+  const [traders, setTraders] = useState<Profile[]>([]);
   const [openOrders, setOpenOrders] = useState<Order[]>([]);
   const [todayTrades, setTodayTrades] = useState<Trade[]>([]);
   const [actions, setActions] = useState<ActionItem[]>([]);
+  const [margins, setMargins] = useState<MarginInfo[]>([]);
+  const [settledToday, setSettledToday] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const [editingMazne, setEditingMazne] = useState(false);
@@ -178,11 +52,10 @@ export default function AdminDashboard() {
   const [savingMazne, setSavingMazne] = useState(false);
   const [approveTrader, setApproveTrader] = useState<Profile | null>(null);
 
-  const today = getTodayJalali();
-  const market = useMemo(
-    () => markets.find((m) => m.id === marketId) ?? null,
-    [markets, marketId],
-  );
+  const today = todayJalaliKey();
+  const market = useMemo(() => markets.find((m) => m.id === marketId) ?? null, [markets, marketId]);
+  const warnAt = market?.marginWarnPct ?? 75;
+  const callAt = market?.marginLiquidatePct ?? 85;
 
   const fetchData = useCallback(async () => {
     try {
@@ -193,28 +66,27 @@ export default function AdminDashboard() {
       if (!current) { setLoading(false); return; }
       if (current.id !== marketId) setMarketId(current.id);
 
-      // پروفایل‌ها یک‌بار خوانده می‌شوند — قبلاً به‌ازای هر تریدر یک کوئری
-      // جداگانه می‌رفت و با ۲۰ تریدر تا ۴۰ رفت‌وبرگشت پشت‌سرهم می‌شد.
-      const { data: profileRows } = await supabase
-        .from('profiles').select('*').eq('role', 'trader');
-      const traders = (profileRows as Profile[]) ?? [];
-      const active = traders.filter((t) => t.active);
-      const pending = traders.filter((t) => !t.active);
-      setActiveTraders(active.length);
+      // پروفایل‌ها یک‌بار خوانده می‌شوند — نه یک کوئری به‌ازای هر تریدر
+      const { data: profileRows } = await supabase.from('profiles').select('*').eq('role', 'trader');
+      const all = (profileRows as Profile[]) ?? [];
+      const active = all.filter((t) => t.active);
+      const pending = all.filter((t) => !t.active);
+      setTraders(all);
 
-      const [trades, orders] = await Promise.all([
+      const [trades, orders, settlements] = await Promise.all([
         repos.trades.getByMarketAndDate(current.id, today),
         repos.orders.getByMarketAndDate(current.id, today),
+        repos.settlements.getAll({ marketId: current.id }),
       ]);
-      setTodayVolume(trades.reduce((s, t) => s + t.quantity, 0));
       setTodayTrades(trades);
       setOpenOrders(orders.filter((o) => o.status === 'open' || o.status === 'partial'));
+      setSettledToday(settlements.some((s) => s.settlementDate === today && !s.reversedAt));
 
-      // نرخ تتر دینامیک است و از خود بازار می‌آید — قبلاً ۹۷۰۰۰ ثابت بود
+      // نرخ تتر دینامیک است و از خود بازار می‌آید
       const tetherRate = current.tetherRateToday ?? current.tetherRateTomorrow ?? 97_000;
 
-      // محاسبهٔ مارجین همهٔ تریدرها موازی، نه پشت‌سرهم
-      const margins = await Promise.all(
+      // مارجین همهٔ تریدرها موازی، نه پشت‌سرهم
+      const computed = await Promise.all(
         active.map(async (t): Promise<[Profile, MarginInfo | null]> => {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data } = await (supabase as any).rpc('compute_user_margin', {
@@ -229,25 +101,20 @@ export default function AdminDashboard() {
           return [t, { lossPct, zone: raw.zone }];
         }),
       );
+      setMargins(computed.flatMap(([, m]) => (m ? [m] : [])));
 
       const items: ActionItem[] = [];
-      for (const [profile, m] of margins) {
+      for (const [profile, m] of computed) {
         if (!m || m.zone === 'safe') continue;
         items.push({
-          id: profile.id,
-          kind: m.zone,
+          id: profile.id, kind: m.zone, profile,
           name: profile.alias || profile.full_name,
           detail: `زیان ودیعه ${toFa(m.lossPct.toFixed(0))}٪`,
-          profile,
+          lossPct: m.lossPct,
         });
       }
       for (const p of pending) {
-        items.push({
-          id: p.id, kind: 'approval',
-          name: p.full_name,
-          detail: p.telegram_id ? `@${p.telegram_id}` : p.phone,
-          profile: p,
-        });
+        items.push({ id: p.id, kind: 'approval', profile: p, name: p.full_name, detail: p.telegram_id ? `@${p.telegram_id}` : p.phone });
       }
       items.sort((a, b) => KIND_ORDER[a.kind] - KIND_ORDER[b.kind]);
       setActions(items);
@@ -280,361 +147,211 @@ export default function AdminDashboard() {
     }
   }
 
-  const lockLabel = `${String(Math.floor(lockCountdown / 60)).padStart(2, '0')}:${String(lockCountdown % 60).padStart(2, '0')}`;
-
-  const bids = useMemo(
-    () => openOrders.filter((o) => o.side === 'buy').sort((a, b) => b.priceToman - a.priceToman).slice(0, 5),
-    [openOrders],
-  );
-  const asks = useMemo(
-    () => openOrders.filter((o) => o.side === 'sell').sort((a, b) => a.priceToman - b.priceToman).slice(0, 5),
-    [openOrders],
-  );
-  const maxDepth = useMemo(
-    () => Math.max(1, ...[...bids, ...asks].map((o) => o.remaining)),
-    [bids, asks],
-  );
-
-  /** نمودار نبض: قیمت معاملات امروز به‌ترتیب زمان */
-  const chartData = useMemo(
-    () => [...todayTrades]
-      .sort((a, b) => new Date(a.matchedAt ?? 0).getTime() - new Date(b.matchedAt ?? 0).getTime())
-      .map((t, i) => ({ i, price: t.priceToman, qty: t.quantity })),
+  // ─── داده‌های مشتق ─────────────────────────────────────────────────────────
+  const names = useMemo(() => new Map(traders.map((t) => [t.id, t.alias || t.full_name])), [traders]);
+  const sortedTrades = useMemo(
+    () => [...todayTrades].sort((a, b) => new Date(a.matchedAt ?? 0).getTime() - new Date(b.matchedAt ?? 0).getTime()),
     [todayTrades],
   );
+  const chartData = useMemo(
+    () => sortedTrades.filter((t) => t.matchedAt).map((t) => ({ minute: tehranMinute(t.matchedAt), price: t.priceToman, qty: t.quantity })),
+    [sortedTrades],
+  );
+  const lastTrade = sortedTrades.at(-1);
+  const dayChange = sortedTrades.length > 1 ? lastTrade!.priceToman - sortedTrades[0]!.priceToman : 0;
+  const volume = todayTrades.reduce((s, t) => s + t.quantity, 0);
+  const bids = useMemo(() => openOrders.filter((o) => o.side === 'buy').sort((a, b) => b.priceToman - a.priceToman).slice(0, 4), [openOrders]);
+  const asks = useMemo(() => openOrders.filter((o) => o.side === 'sell').sort((a, b) => a.priceToman - b.priceToman).slice(0, 4), [openOrders]);
 
-  const callCount = actions.filter((a) => a.kind === 'call').length;
+  const avgLoss = margins.length ? margins.reduce((s, m) => s + m.lossPct, 0) / margins.length : 0;
+  const zoneCount = { safe: 0, warn: 0, call: 0 };
+  for (const m of margins) zoneCount[m.zone] += 1;
+  const totalDeposit = traders.filter((t) => t.active).reduce((s, t) => s + (t.deposit_tether ?? 0), 0);
+
+  const nowHour = tick ? Number(tick.tehranTime.slice(0, 2)) : 0;
+  const steps = [
+    { label: 'افتتاح بازار', time: '۹:۰۰', state: nowHour >= 9 ? 'done' : 'next' },
+    { label: 'قفل امروزی', time: '۱۳:۳۰', state: isLocked ? 'done' : nowHour >= 9 ? 'now' : 'next' },
+    { label: 'تصفیهٔ روزانه', time: '۱۳:۳۵', state: settledToday ? 'done' : isLocked ? 'now' : 'next' },
+  ] as const;
+
+  // ─── ورود کارت‌ها ───────────────────────────────────────────────────────────
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.from('.dash-card', { y: 26, autoAlpha: 0, stagger: 0.08, duration: 0.8, ease: 'power3.out', clearProps: 'transform' });
+    });
+    return () => mm.revert();
+  }, { scope: root });
 
   return (
-    <div className="space-y-5" dir="rtl">
+    <div ref={root} className="grid grid-cols-12 gap-[18px]" dir="rtl">
 
-      {/* ── نوار بالا: حال بازار ───────────────────────────────────────── */}
-      <section
-        className="rounded-2xl border px-5 py-5 sm:px-6"
-        style={{
-          // accent-surface سطح پرِ برند است (دکمهٔ اصلی) و اینجا یک تختهٔ
-          // طلایی می‌ساخت که متن رویش خوانا نبود. wash تینت ملایم آن است.
-          backgroundColor: 'var(--accent-wash)',
-          borderColor: 'var(--border-subtle)',
-        }}
+      {/* ── مزنه و روند امروز ─────────────────────────────────────────── */}
+      <GlassCard
+        data-tour="hero"
+        className="dash-card col-span-12 flex min-h-[560px] flex-col p-6 xl:col-span-8 xl:row-span-2"
+        style={{ background: 'linear-gradient(180deg, rgba(255,255,255,.78), rgba(255,246,226,.55))' }}
       >
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-
-          {/* سمت راست (شروع RTL): بازار و مزنه */}
-          <div className="min-w-0">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              {markets.map((m) => {
-                const on = m.id === marketId;
-                return (
-                  <button
-                    key={m.id}
-                    type="button"
-                    onClick={() => { setMarketId(m.id); setEditingMazne(false); }}
-                    className="rounded-full px-3 py-1 text-xs font-medium transition-colors"
-                    style={on
-                      ? { backgroundColor: 'var(--accent-gold)', color: 'var(--text-on-accent)' }
-                      : { color: 'var(--text-secondary)', backgroundColor: 'var(--surface-tint)' }}
-                  >
-                    {m.name}
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className="mb-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
-              مزنهٔ جاری
-            </p>
-
-            {editingMazne ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={mazneInput}
-                  onChange={(e) => setMazneInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') void handleSaveMazne();
-                    if (e.key === 'Escape') setEditingMazne(false);
-                  }}
-                  autoFocus
-                  className="w-44 rounded-lg border bg-transparent px-3 py-1.5 text-lg outline-none tabular-nums"
-                  style={{ borderColor: 'var(--accent-gold)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
-                />
-                <button
-                  type="button" onClick={() => void handleSaveMazne()} disabled={savingMazne}
-                  className="rounded-lg p-2 transition-colors hover:bg-[var(--surface-tint-strong)]"
-                  style={{ color: 'var(--semantic-success)' }}
-                  aria-label="ذخیرهٔ مزنه"
-                >
-                  <Check size={16} />
-                </button>
-                <button
-                  type="button" onClick={() => setEditingMazne(false)}
-                  className="rounded-lg p-2 transition-colors hover:bg-[var(--surface-tint-strong)]"
-                  style={{ color: 'var(--semantic-danger)' }}
-                  aria-label="انصراف"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                onClick={() => { setMazneInput(String(market?.mazneCurrent ?? '')); setEditingMazne(true); }}
-                className="group flex items-baseline gap-2 text-right"
-                title="ویرایش مزنه"
-              >
-                <span
-                  className="text-3xl font-bold tabular-nums sm:text-4xl"
-                  style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
-                >
-                  {market ? toFa(market.mazneCurrent.toLocaleString('en-US')) : '—'}
-                </span>
-                <span className="text-sm" style={{ color: 'var(--text-secondary)' }}>تومان</span>
-                <Pencil
-                  size={13}
-                  className="opacity-0 transition-opacity group-hover:opacity-100"
-                  style={{ color: 'var(--text-tertiary)' }}
-                />
-              </button>
-            )}
-          </div>
-
-          {/* سمت چپ: تاریخ و وضعیت قفل.
-              ساعت اینجا تکرار نمی‌شود — نوار بالای پوسته آن را در همهٔ
-              صفحه‌ها نشان می‌دهد و دو ساعت کنار هم فقط شلوغی بود. */}
-          <div className="text-left">
-            <p className="mb-2 text-xs" style={{ color: 'var(--text-secondary)' }}>{longDate()}</p>
-            <span
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold"
-              style={isLocked
-                ? { backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 15%, transparent)', color: 'var(--semantic-danger)' }
-                : { backgroundColor: 'color-mix(in srgb, var(--semantic-success) 15%, transparent)', color: 'var(--semantic-success)' }}
-            >
-              {isLocked ? <Lock size={12} /> : <Unlock size={12} />}
-              {isLocked ? 'بازار قفل است' : `${toFa(lockLabel)} تا قفل`}
-            </span>
-          </div>
-        </div>
-      </section>
-
-      {/* ── نیاز به رسیدگی + نبض امروز ─────────────────────────────────── */}
-      <div className="grid gap-5 lg:grid-cols-5">
-
-        {/* فهرست کارها — ستون پهن‌تر، چون مهم‌ترین بخش صفحه است */}
-        <section
-          className="overflow-hidden rounded-2xl border lg:col-span-3"
-          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-        >
-          <header className="flex items-center justify-between px-5 py-3.5">
-            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-              نیاز به رسیدگی
-            </h2>
-            {actions.length > 0 && (
-              <span
-                className="rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums"
-                style={callCount > 0
-                  ? { backgroundColor: 'color-mix(in srgb, var(--semantic-danger) 15%, transparent)', color: 'var(--semantic-danger)' }
-                  : { backgroundColor: 'var(--surface-tint-strong)', color: 'var(--text-secondary)' }}
-              >
-                {toFa(actions.length)}
-              </span>
-            )}
-          </header>
-
-          {loading ? (
-            <div className="space-y-2 px-5 pb-5">
-              {[0, 1, 2].map((i) => <div key={i} className="skeleton-shimmer h-11 rounded-lg" />)}
-            </div>
-          ) : actions.length === 0 ? (
-            <p className="px-5 pb-6 pt-2 text-sm" style={{ color: 'var(--text-tertiary)' }}>
-              چیزی روی میز نیست — همهٔ تریدرها سالم‌اند و درخواست عضویتی در صف نیست.
-            </p>
-          ) : (
-            <ul>
-              {actions.slice(0, 7).map((a) => {
-                const s = KIND_STYLE[a.kind];
-                return (
-                  <li key={`${a.kind}-${a.id}`}>
-                    <button
-                      type="button"
-                      onClick={() => { if (a.kind === 'approval') setApproveTrader(a.profile); }}
-                      className="flex w-full items-center gap-3 border-t px-5 py-3 text-right transition-colors hover:bg-[var(--surface-tint)]"
-                      style={{ borderColor: 'var(--border-subtle)' }}
-                    >
-                      <span
-                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 14%, transparent)`, color: s.color }}
-                      >
-                        {a.kind === 'approval' ? <UserPlus size={14} /> : <TrendingDown size={14} />}
-                      </span>
-
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                          {a.name}
-                        </span>
-                        <span className="block truncate text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                          {a.detail}
-                        </span>
-                      </span>
-
-                      <span
-                        className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold"
-                        style={{ backgroundColor: `color-mix(in srgb, ${s.color} 14%, transparent)`, color: s.color }}
-                      >
-                        {s.label}
-                      </span>
-                      <ChevronLeft size={15} style={{ color: 'var(--text-tertiary)' }} />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+        <div className="flex flex-wrap items-center gap-3">
+          {markets.length > 0 && marketId && (
+            <SegmentedControl
+              aria-label="انتخاب بازار"
+              items={markets.map((m) => ({ value: m.id, label: m.name }))}
+              value={marketId}
+              onChange={(id) => { setMarketId(id); setEditingMazne(false); }}
+            />
           )}
-        </section>
+          {isLocked && (
+            <span className="ms-auto rounded-[9px] px-2.5 py-1 text-[13px] font-bold" style={{ background: 'var(--sell-wash)', color: 'var(--semantic-sell)' }}>
+              بعد از قفل — لفظ‌ها فردایی‌اند
+            </span>
+          )}
+        </div>
 
-        {/* نبض امروز */}
-        <section
-          className="flex flex-col overflow-hidden rounded-2xl border lg:col-span-2"
-          style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-        >
-          <header className="px-5 pt-3.5">
-            <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>نبض امروز</h2>
-          </header>
+        <p className="mt-4 text-[14px]" style={{ color: 'var(--text-tertiary)' }}>مزنهٔ جاری {market ? `· ${market.name}` : ''}</p>
 
-          <div className="h-28 px-2 pt-2">
-            {chartData.length < 2 ? (
-              <div className="flex h-full items-center justify-center text-xs" style={{ color: 'var(--text-tertiary)' }}>
-                هنوز معامله‌ای ثبت نشده
-              </div>
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 4 }}>
-                  <defs>
-                    <linearGradient id="pulseFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--accent-gold)" stopOpacity={0.28} />
-                      <stop offset="100%" stopColor="var(--accent-gold)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <YAxis hide domain={['dataMin', 'dataMax']} />
-                  <Tooltip
-                    cursor={{ stroke: 'var(--border-strong)' }}
-                    contentStyle={{
-                      backgroundColor: 'var(--bg-overlay)',
-                      border: '1px solid var(--border-strong)',
-                      borderRadius: 10,
-                      fontSize: 12,
-                      direction: 'rtl',
-                    }}
-                    labelFormatter={() => ''}
-                    formatter={(v) => [formatTomans(Number(v ?? 0)), 'قیمت']}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="price"
-                    stroke="var(--accent-gold)"
-                    strokeWidth={2}
-                    fill="url(#pulseFill)"
-                    isAnimationActive={false}
-                    dot={false}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          <dl className="mt-auto grid grid-cols-2 border-t" style={{ borderColor: 'var(--border-subtle)' }}>
-            {[
-              { label: 'حجم امروز', value: `${toFa(todayVolume)} واحد` },
-              { label: 'تریدر فعال', value: toFa(activeTraders) },
-              { label: 'لفظ باز', value: toFa(openOrders.length) },
-              { label: 'در حراج', value: toFa(callCount), danger: callCount > 0 },
-            ].map((s, i) => (
-              <div
-                key={s.label}
-                className="px-5 py-3"
-                style={{
-                  borderColor: 'var(--border-subtle)',
-                  borderTopWidth: i > 1 ? 1 : 0,
-                  borderLeftWidth: i % 2 === 0 ? 1 : 0,
-                }}
-              >
-                <dt className="text-[11px]" style={{ color: 'var(--text-tertiary)' }}>{s.label}</dt>
-                <dd
-                  className="mt-0.5 text-base font-bold tabular-nums"
-                  style={{
-                    color: s.danger ? 'var(--semantic-danger)' : 'var(--text-primary)',
-                    fontFamily: "'Geist Mono', monospace",
-                  }}
-                >
-                  {s.value}
-                </dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      </div>
-
-      {/* ── دفتر لفظ ───────────────────────────────────────────────────── */}
-      <section
-        className="overflow-hidden rounded-2xl border"
-        style={{ backgroundColor: 'var(--bg-elevated)', borderColor: 'var(--border-subtle)' }}
-      >
-        <header className="flex items-baseline justify-between px-5 py-3.5">
-          <h2 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>دفتر لفظ</h2>
-          <span className="text-xs" style={{ color: 'var(--text-tertiary)' }}>پنج ردیف نزدیک به مزنه</span>
-        </header>
-
-        <div className="grid sm:grid-cols-2">
-          {([
-            { rows: asks, side: 'فروش', color: 'var(--semantic-sell)' },
-            { rows: bids, side: 'خرید', color: 'var(--semantic-buy)' },
-          ] as const).map((col, ci) => (
-            <div
-              key={col.side}
-              className="border-t"
-              style={{
-                borderColor: 'var(--border-subtle)',
-                borderLeftWidth: ci === 0 ? 1 : 0,
-              }}
+        <div className="mt-1 flex flex-wrap items-end gap-x-4 gap-y-2">
+          {editingMazne ? (
+            <div className="flex items-center gap-2 py-2">
+              <input
+                type="number" value={mazneInput} autoFocus
+                onChange={(e) => setMazneInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') void handleSaveMazne(); if (e.key === 'Escape') setEditingMazne(false); }}
+                className="h-14 w-60 rounded-[14px] border bg-white/80 px-4 text-[30px] font-bold outline-none"
+                style={{ borderColor: 'var(--gold)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
+              />
+              <button type="button" onClick={() => void handleSaveMazne()} disabled={savingMazne} aria-label="ذخیرهٔ مزنه"
+                className="grid h-11 w-11 place-items-center rounded-[12px] text-white" style={{ background: 'var(--semantic-success)' }}>
+                <Check size={18} />
+              </button>
+              <button type="button" onClick={() => setEditingMazne(false)} aria-label="انصراف"
+                className="grid h-11 w-11 place-items-center rounded-[12px]" style={{ background: 'var(--surface-tint-strong)', color: 'var(--text-secondary)' }}>
+                <X size={18} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button" title="برای ویرایش مزنه بزنید"
+              onClick={() => { setMazneInput(String(market?.mazneCurrent ?? '')); setEditingMazne(true); }}
+              className="group flex items-end gap-3 text-right"
             >
-              <p className="px-5 py-2 text-xs font-semibold" style={{ color: col.color }}>{col.side}</p>
-              {col.rows.length === 0 ? (
-                <p className="px-5 pb-4 text-xs" style={{ color: 'var(--text-tertiary)' }}>خالی</p>
+              {market ? (
+                <Odometer value={market.mazneCurrent} className="text-[64px] font-bold tracking-tight sm:text-[76px]" style={{ color: 'var(--text-primary)' }} />
               ) : (
-                col.rows.map((o) => (
-                  <div key={o.id} className="relative flex items-center justify-between px-5 py-1.5">
-                    {/* نوار عمق: پهنا نسبت مستقیم با حجم باقی‌مانده دارد */}
-                    <span
-                      className="pointer-events-none absolute inset-y-0 right-0"
-                      style={{
-                        width: `${(o.remaining / maxDepth) * 100}%`,
-                        backgroundColor: `color-mix(in srgb, ${col.color} 9%, transparent)`,
-                      }}
-                    />
-                    <span
-                      className="relative tabular-nums text-xs"
-                      style={{ color: col.color, fontFamily: "'Geist Mono', monospace" }}
-                    >
-                      {toFa(o.priceToman.toLocaleString('en-US'))}
-                    </span>
-                    <span className="relative text-xs tabular-nums" style={{ color: 'var(--text-secondary)' }}>
-                      {toFa(o.remaining)}
-                    </span>
-                  </div>
-                ))
+                <span className="text-[64px] font-bold" style={{ color: 'var(--text-tertiary)' }}>—</span>
               )}
-              <div className="pb-3" />
+              <span className="pb-3 text-[19px]" style={{ color: 'var(--text-secondary)' }}>تومان</span>
+              <Pencil size={15} className="mb-4 opacity-0 transition-opacity group-hover:opacity-100" style={{ color: 'var(--text-tertiary)' }} />
+            </button>
+          )}
+          {dayChange !== 0 && (
+            <span
+              className="mb-3.5 inline-flex h-[30px] items-center gap-1 rounded-[9px] px-2.5 text-[14px] font-bold"
+              title="تغییر از اولین معاملهٔ امروز"
+              style={dayChange > 0 ? { background: 'var(--buy-wash)', color: 'var(--semantic-buy)' } : { background: 'var(--sell-wash)', color: 'var(--semantic-sell)' }}
+            >
+              {dayChange > 0 ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
+              {money(Math.abs(dayChange))}
+            </span>
+          )}
+        </div>
+
+        <dl className="mt-1 flex flex-wrap gap-x-6 gap-y-1 text-[14px]" style={{ color: 'var(--text-secondary)' }}>
+          {[
+            ['تتر امروزی', market?.tetherRateToday ? money(market.tetherRateToday) : '—'],
+            ['تتر فردایی', market?.tetherRateTomorrow ? money(market.tetherRateTomorrow) : '—'],
+            ['آخرین معامله', lastTrade ? money(lastTrade.priceToman) : '—'],
+            ['حجم امروز', `${toFa(volume)} واحد`],
+          ].map(([k, v]) => (
+            <div key={k} className="flex gap-1.5"><dt>{k}</dt><dd className="font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>{v}</dd></div>
+          ))}
+        </dl>
+
+        <div className="mt-3 min-h-[300px] flex-1">
+          {loading ? <div className="skeleton-shimmer h-full rounded-[16px]" /> : <PriceChart data={chartData} />}
+        </div>
+      </GlassCard>
+
+      {/* ── سلامت ودیعه‌ها ────────────────────────────────────────────── */}
+      <GlassCard data-tour="gauge" className="dash-card col-span-12 p-6 md:col-span-6 xl:col-span-4">
+        <CardHeader title="مصرف ودیعهٔ اتاق" aside="میانگین معامله‌گرها" />
+        <SemiGauge value={avgLoss} warnAt={warnAt} callAt={callAt}>
+          <CountUp value={avgLoss} decimals={1} suffix="٪" className="block text-[40px] font-bold leading-none" style={{ color: 'var(--text-primary)' }} />
+          <span className="text-[13px]" style={{ color: 'var(--text-tertiary)' }}>
+            {avgLoss >= callAt ? 'در محدودهٔ حراج' : avgLoss >= warnAt ? 'بالای آستانهٔ هشدار' : 'زیر آستانهٔ هشدار'}
+          </span>
+        </SemiGauge>
+        <div className="mt-4 grid grid-cols-3 border-t pt-3 text-[13px]" style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-secondary)' }}>
+          {[
+            ['امن', zoneCount.safe, 'var(--gold)'],
+            [`هشدار ${toFa(warnAt)}٪`, zoneCount.warn, 'var(--amber)'],
+            [`حراج ${toFa(callAt)}٪`, zoneCount.call, 'var(--semantic-sell)'],
+          ].map(([label, n, c]) => (
+            <div key={String(label)}>
+              <span className="flex items-center gap-1.5"><i className="h-2 w-2 rounded-[3px]" style={{ background: String(c) }} />{label}</span>
+              <b className="block text-[18px]" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>{toFa(Number(n))} نفر</b>
             </div>
           ))}
         </div>
-      </section>
+      </GlassCard>
+
+      {/* ── نیاز به رسیدگی ────────────────────────────────────────────── */}
+      <GlassCard data-tour="attention" className="dash-card col-span-12 p-6 md:col-span-6 xl:col-span-4">
+        <CardHeader title="نیاز به رسیدگی" aside={actions.length ? `${toFa(actions.length)} مورد` : undefined} />
+        {loading
+          ? <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="skeleton-shimmer h-12 rounded-[12px]" />)}</div>
+          : <AttentionList items={actions} warnAt={warnAt} callAt={callAt} onApprove={setApproveTrader} />}
+      </GlassCard>
+
+      {/* ── آخرین معاملات ─────────────────────────────────────────────── */}
+      <GlassCard className="dash-card col-span-12 p-6 lg:col-span-6 xl:col-span-5">
+        <CardHeader title="آخرین معاملات" aside={<button type="button" onClick={() => navigate('/admin/trades')} className="hover:underline">همه</button>} />
+        <RecentTrades trades={[...sortedTrades].reverse().slice(0, 5)} names={names} />
+      </GlassCard>
+
+      {/* ── دفتر لفظ ──────────────────────────────────────────────────── */}
+      <GlassCard data-tour="book" className="dash-card col-span-12 p-6 md:col-span-6 lg:col-span-6 xl:col-span-4">
+        <CardHeader title="دفتر لفظ" aside="نزدیک به مزنه" />
+        <OrderLadder asks={asks} bids={bids} mazne={market?.mazneCurrent ?? 0} />
+      </GlassCard>
+
+      {/* ── ودیعه‌ها و برنامهٔ روز ────────────────────────────────────── */}
+      <GlassCard data-tour="day" className="dash-card col-span-12 flex flex-col p-6 md:col-span-6 xl:col-span-3">
+        <CardHeader title="کل ودیعه‌ها" />
+        <div className="flex items-baseline gap-2">
+          <CountUp value={totalDeposit} className="text-[38px] font-bold leading-tight" style={{ color: 'var(--text-primary)' }} />
+          <span className="text-[16px]" style={{ color: 'var(--text-tertiary)' }}>تتر</span>
+        </div>
+        <ol className="my-4 flex flex-col">
+          {steps.map((s, i) => (
+            <li key={s.label} className="relative flex items-center gap-2.5 py-[7px] text-[14px]"
+              style={{ color: s.state === 'now' ? 'var(--text-primary)' : 'var(--text-secondary)', fontWeight: s.state === 'now' ? 700 : 400 }}>
+              {i < steps.length - 1 && <span className="absolute right-[7px] top-[26px] h-[calc(100%-14px)] w-[2px]" style={{ background: 'var(--border-strong)' }} />}
+              <span
+                className="relative z-[1] h-4 w-4 shrink-0 rounded-full border-2"
+                style={
+                  s.state === 'done' ? { borderColor: 'var(--semantic-buy)', background: 'var(--semantic-buy)', boxShadow: 'inset 0 0 0 3px #fff' }
+                  : s.state === 'now' ? { borderColor: 'var(--gold)', background: '#fff', boxShadow: '0 0 0 4px rgba(200,150,47,.18)' }
+                  : { borderColor: 'var(--border-strong)', background: 'var(--paper)' }
+                }
+              />
+              {s.label}
+              <time className="ms-auto font-normal" style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-num)' }}>{s.time}</time>
+            </li>
+          ))}
+        </ol>
+        <button
+          type="button" onClick={() => navigate('/admin/settlement')}
+          className="mt-auto h-11 w-full rounded-[13px] text-[15px] font-bold"
+          style={{ color: '#FFF8E8', background: 'linear-gradient(180deg, #2C261C, #17140F)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,.14), 0 10px 20px -10px rgba(27,24,19,.6)' }}
+        >
+          {settledToday ? 'دیدن تصفیهٔ امروز' : 'رفتن به تصفیه'}
+        </button>
+      </GlassCard>
 
       {approveTrader && (
-        <ApproveModal
-          trader={approveTrader}
-          onClose={() => setApproveTrader(null)}
-          onApproved={() => void fetchData()}
-        />
+        <ApproveModal trader={approveTrader} onClose={() => setApproveTrader(null)} onApproved={() => void fetchData()} />
       )}
     </div>
   );

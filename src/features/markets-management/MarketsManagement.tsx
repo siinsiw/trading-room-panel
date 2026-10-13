@@ -213,7 +213,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                   onChange={(e) => setField(f.key, e.target.value)}
                   placeholder={f.placeholder}
                   className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: f.type === 'number' ? "'Geist Mono', monospace" : undefined }}
+                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: f.type === 'number' ? 'var(--font-num)' : undefined }}
                 />
               </div>
             ))}
@@ -306,7 +306,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                   onChange={(e) => setField('parry_threshold', e.target.value)}
                   placeholder="5000"
                   className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                  style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                 />
                 <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
                   اگر قیمت ±این مقدار از تصفیه برود، تصفیهٔ فوری زده می‌شود.
@@ -324,7 +324,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                     onChange={(e) => setField('margin_warn_pct', e.target.value)}
                     placeholder="75"
                     className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                   />
                 </div>
                 <div>
@@ -337,7 +337,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
                     onChange={(e) => setField('margin_liquidate_pct', e.target.value)}
                     placeholder="85"
                     className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                   />
                 </div>
                 <p className="col-span-2 text-xs" style={{ color: 'var(--text-tertiary)' }}>
@@ -375,7 +375,7 @@ function MarketModal({ market, onClose, onSaved }: MarketModalProps) {
               style={{
                 borderColor: 'var(--border-strong)',
                 color: 'var(--text-primary)',
-                fontFamily: "'Geist Mono', monospace",
+                fontFamily: 'var(--font-num)',
               }}
             />
             <p className="mt-1 text-xs" style={{ color: 'var(--text-tertiary)' }}>
@@ -523,7 +523,7 @@ export default function MarketsManagement() {
                     style={{ borderColor: 'var(--border-subtle)' }}
                   >
                     <td className="px-4 py-3 font-medium" style={{ color: 'var(--text-primary)' }}>{m.name}</td>
-                    <td className="px-4 py-3 tabular-nums font-mono" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+                    <td className="px-4 py-3 tabular-nums font-mono" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                       {m.symbol}
                     </td>
                     <td className="px-4 py-3">
@@ -539,7 +539,7 @@ export default function MarketsManagement() {
                             }}
                             autoFocus
                             className="w-28 rounded border bg-transparent px-2 py-1 text-xs outline-none"
-                            style={{ borderColor: 'var(--accent-gold)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                            style={{ borderColor: 'var(--accent-gold)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                           />
                           <button type="button" onClick={() => void handleSaveMazne(m.id)} disabled={savingMazne} style={{ color: 'var(--semantic-success)' }}>
                             <Check size={13} />
@@ -551,7 +551,7 @@ export default function MarketsManagement() {
                       ) : (
                         <span
                           className="tabular-nums cursor-pointer hover:text-opacity-80"
-                          style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
+                          style={{ color: 'var(--accent-gold)', fontFamily: 'var(--font-num)' }}
                           onDoubleClick={() => { setEditingMazne(m.id); setMazneValue(String(m.mazneCurrent)); }}
                           title="دو بار کلیک برای ویرایش"
                         >
@@ -572,7 +572,7 @@ export default function MarketsManagement() {
                     </td>
                     <td
                       className="px-4 py-3 text-xs tabular-nums"
-                      style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}
+                      style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}
                     >
                       {formatTomans(m.liquidationToleranceToman ?? 200)}
                     </td>

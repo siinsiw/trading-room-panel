@@ -1,116 +1,26 @@
-/* ─── YekanBakh FaNum — Persian UI font (self-hosted) ──────────────────────── */
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 100;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Thin.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Thin.woff')   format('woff');
-}
+/* ─── نازنین — قلم کل پنل (۲۰۲۶-۱۰-۱۳) ────────────────────────────────────
+   IRNazanin از مجموعهٔ قلم‌های استاندارد شورای عالی اطلاع‌رسانی، نسخهٔ وب.
+   جای YekanBakh را گرفت چون صفرِ YekanBakh یک دایرهٔ توخالی است و «۷۰۰»
+   شبیه «۷۵۵» خوانده می‌شد — در پنل معاملاتی این اشتباه‌خوانی گران است.
 
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 200;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Thin.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Thin.woff')   format('woff');
-}
+   size-adjust: نازنین در اندازهٔ اسمی یکسان حدود ۱۵٪ ریزتر از قلم‌های
+   بدون‌گیره دیده می‌شود؛ این ضریب اندازهٔ ظاهری را برمی‌گرداند تا همهٔ
+   text-sm و text-xs های موجود بدون دست‌کاری خوانا بمانند.
 
+   اگر بعداً «فرهنگ» (فونت‌ایران) خریده شد، فقط همین دو بلوک عوض می‌شود. */
 @font-face {
-  font-family: 'YekanBakh';
+  font-family: 'Nazanin';
   font-style: normal;
-  font-weight: 300;
+  font-weight: 100 500;
   font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Light.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Light.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Regular.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Regular.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Regular.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Regular.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-SemiBold.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-SemiBold.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Bold.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Bold.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 800;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-ExtraBold.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-ExtraBold.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 900;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-Black.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-Black.woff')   format('woff');
-}
-
-@font-face {
-  font-family: 'YekanBakh';
-  font-style: normal;
-  font-weight: 950;
-  font-display: swap;
-  src:
-    url('/fonts/woff2/YekanBakhFaNum-ExtraBlack.woff2') format('woff2'),
-    url('/fonts/woff/YekanBakhFaNum-ExtraBlack.woff')   format('woff');
-}
-
-/* ─── Geist Mono — numbers, code, prices ──────────────────────────────────── */
-@font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/GeistMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
+  size-adjust: 116%;
+  src: url('/fonts/woff2/IRNazanin-Regular.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Geist Mono';
-  src: url('/fonts/GeistMono-Medium.woff2') format('woff2');
-  font-weight: 500;
+  font-family: 'Nazanin';
   font-style: normal;
+  font-weight: 600 900;
   font-display: swap;
+  size-adjust: 116%;
+  src: url('/fonts/woff2/IRNazanin-Bold.woff2') format('woff2');
 }

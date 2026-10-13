@@ -18,7 +18,7 @@ function KpiCard({ label, value, loading }: KpiCardProps) {
       {loading ? (
         <div className="skeleton-shimmer h-6 rounded" />
       ) : (
-        <p className="text-xl font-bold tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>{value}</p>
+        <p className="text-xl font-bold tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>{value}</p>
       )}
     </div>
   );
@@ -196,7 +196,7 @@ export default function AccountantReports() {
               onChange={(e) => f.set(e.target.value)}
               placeholder="1405/01/01"
               className="w-32 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+              style={{ borderColor: 'var(--border-subtle)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
             />
           </div>
         ))}
@@ -279,10 +279,10 @@ export default function AccountantReports() {
                     <td className="px-4 py-2.5" style={{ color: 'var(--text-primary)' }}>{b.label}</td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)' }}>{toFa(b.trades)}</td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>{toFa(b.volume)}</td>
-                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>{formatTether(b.commission)}</td>
+                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>{formatTether(b.commission)}</td>
                     <td
                       className="px-4 py-2.5 tabular-nums font-medium"
-                      style={{ color: b.pnl >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)', fontFamily: "'Geist Mono', monospace" }}
+                      style={{ color: b.pnl >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)', fontFamily: 'var(--font-num)' }}
                     >
                       {b.pnl >= 0 ? '+' : ''}{formatTomans(b.pnl)}
                     </td>

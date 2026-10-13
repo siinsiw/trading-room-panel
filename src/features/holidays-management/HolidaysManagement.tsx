@@ -171,13 +171,13 @@ export default function HolidaysManagement() {
                 >
                   <td
                     className="px-4 py-3 tabular-nums font-medium"
-                    style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ color: 'var(--accent-gold)', fontFamily: 'var(--font-num)' }}
                   >
                     {formatIsoToJalali(hol.date)}
                   </td>
                   <td
                     className="px-4 py-3 tabular-nums"
-                    style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}
                   >
                     {toFa(hol.date)}
                   </td>
@@ -186,7 +186,7 @@ export default function HolidaysManagement() {
                   </td>
                   <td
                     className="px-4 py-3 text-xs tabular-nums"
-                    style={{ color: 'var(--text-tertiary)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ color: 'var(--text-tertiary)', fontFamily: 'var(--font-num)' }}
                   >
                     {formatIsoToJalali(hol.created_at)}
                   </td>
@@ -249,7 +249,7 @@ export default function HolidaysManagement() {
                   style={{
                     borderColor: 'var(--border-strong)',
                     color: 'var(--text-primary)',
-                    fontFamily: "'Geist Mono', monospace",
+                    fontFamily: 'var(--font-num)',
                     colorScheme: 'dark',
                   }}
                 />

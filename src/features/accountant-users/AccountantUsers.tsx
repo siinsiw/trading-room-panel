@@ -117,7 +117,7 @@ export default function AccountantUsers() {
                         <span style={{ color: 'var(--text-primary)' }}>{p.full_name}</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+                    <td className="px-4 py-3 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                       {toFa(p.phone)}
                     </td>
                     <td className="px-4 py-3"><RoleBadge role={p.role} /></td>

@@ -12,38 +12,113 @@ html {
   font-size: 15px;
 }
 
+/* کاغذ گرم با دانهٔ ریز، خطوط کم‌رنگ دفتر و دو منبع نور طلایی.
+   شیشه بدون چیزی پشتش شیشه دیده نمی‌شود — این لایه‌ها همان «پشت» هستند. */
 body {
   margin: 0;
-  background-color: var(--bg-base);
   color: var(--text-primary);
-  font-family: 'YekanBakh', 'Vazirmatn', system-ui, sans-serif;
+  font-family: var(--font-ui);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .35  0 0 0 0 .26  0 0 0 0 .1  0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"),
+    radial-gradient(1100px 620px at 88% -12%, rgba(224, 164, 58, 0.28), transparent 62%),
+    radial-gradient(700px 520px at 34% 38%, rgba(255, 208, 140, 0.26), transparent 65%),
+    radial-gradient(640px 480px at 62% 96%, rgba(214, 160, 120, 0.18), transparent 65%),
+    repeating-linear-gradient(to bottom, transparent 0 31px, rgba(70, 52, 20, 0.03) 31px 32px),
+    var(--paper);
+  background-attachment: fixed;
 }
 
-/* ─── Numeric / mono elements ────────────────────── */
+/* ─── Numeric elements ───────────────────────────── */
 .font-mono,
 [data-numeric],
 .tabular {
-  font-family: 'Geist Mono', 'Courier New', monospace;
+  font-family: var(--font-num);
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── شیشه ───────────────────────────────────────
+   داخل @layer components تا کلاس‌های Tailwind (fixed، rounded-…) بر آن
+   غلبه کنند؛ CSS بی‌لایه از هر utility لایه‌دار قوی‌تر است. */
+@layer components {
+  .glass {
+    position: relative;
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--glass-shadow);
+    transition: box-shadow 0.35s ease;
+    isolation: isolate;
+  }
+  .glass-strong { background: var(--glass-strong); }
+
+  /* لبهٔ نوری: بالا روشن، پایین طلایی — با mask فقط ۱px دور لبه دیده می‌شود */
+  .glass::after,
+  .rounded-xl[style*='--bg-elevated']::after,
+  .rounded-2xl[style*='--bg-elevated']::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(165deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.25) 38%, rgba(200, 150, 47, 0.22) 100%);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+
+  /* نور دنبال‌کنندهٔ اشاره‌گر — --mx/--my/--spot را useSpotlight با GSAP می‌دهد */
+  .glass::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(420px circle at var(--mx, 50%) var(--my, -40%), rgba(224, 164, 58, 0.13), transparent 60%);
+    opacity: var(--spot, 0);
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* کارت‌های قدیمی صفحه‌ها همه یک الگو دارند:
+     rounded-xl|2xl + backgroundColor: var(--bg-elevated). همین قاعده همه‌شان را
+     بدون دست‌زدن به تک‌تک صفحه‌ها شیشه‌ای می‌کند. */
+  .rounded-xl[style*='--bg-elevated'],
+  .rounded-2xl[style*='--bg-elevated'] {
+    position: relative;
+    background: var(--glass) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-color: transparent !important;
+    border-radius: 22px;
+    box-shadow: var(--glass-shadow);
+  }
+  .rounded-2xl[style*='--bg-elevated'][role='dialog'],
+  [role='dialog'] .rounded-2xl[style*='--bg-elevated'] {
+    background: var(--glass-strong) !important;
+  }
 }
 
 /* ─── Scrollbar ───────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: var(--bg-base);
+  background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: var(--border-strong);
-  border-radius: 2px;
+  background: rgba(70, 52, 20, 0.18);
+  border-radius: 3px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--text-tertiary);
+  background: rgba(70, 52, 20, 0.32);
 }
 
 /* اسکرول مخفی — برای navهای موبایل */
@@ -58,34 +133,17 @@ table td {
   text-align: start;
 }
 
-/* ─── Custom cursor (desktop only) ─────────────────── */
-@media (pointer: fine) {
-  * { cursor: none; }
-
-  .cursor-dot {
-    margin-left: -5px;
-    margin-top: -5px;
-  }
-
-  .cursor-dot.cursor-expanded {
-    width: 28px !important;
-    height: 28px !important;
-    margin-left: -14px;
-    margin-top: -14px;
-    opacity: 0.7;
-  }
-}
-
 /* ─── Bottom nav glow ──────────────────────────────── */
 .nav-active {
   position: relative;
 }
+
 .nav-active::before {
   content: "";
   position: absolute;
   inset: -8px;
-  background: radial-gradient(circle, var(--accent-gold) 0%, transparent 60%);
-  opacity: 0.4;
+  background: radial-gradient(circle, var(--gold) 0%, transparent 60%);
+  opacity: 0.22;
   filter: blur(12px);
   z-index: -1;
   border-radius: 50%;
@@ -93,9 +151,10 @@ table td {
 
 /* ─── Trade flash animation ────────────────────────── */
 @keyframes tradeFlash {
-  0%   { background-color: color-mix(in srgb, var(--accent-gold) 30%, transparent); }
+  0%   { background-color: color-mix(in srgb, var(--gold) 30%, transparent); }
   100% { background-color: transparent; }
 }
+
 .trade-flash {
   animation: tradeFlash 800ms ease-out forwards;
 }
@@ -108,5 +167,74 @@ table td {
 
 /* ─── Selection ────────────────────────────────────── */
 ::selection {
-  background: color-mix(in srgb, var(--accent-gold) 30%, transparent);
+  background: color-mix(in srgb, var(--gold) 30%, transparent);
+}
+
+/* ─── تور راهنما (driver.js) — راست‌چین و شیشه‌ای ───────────────── */
+.driver-active-element { border-radius: 22px; }
+.driver-popover.tt-tour {
+  direction: rtl;
+  font-family: var(--font-ui);
+  min-width: 300px;
+  max-width: 360px;
+  padding: 18px 20px 16px;
+  border-radius: 20px;
+  color: var(--text-primary);
+  background: var(--glass-strong);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-shadow-hover);
+}
+.driver-popover.tt-tour .driver-popover-title {
+  font-family: var(--font-ui);
+  font-size: 19px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.driver-popover.tt-tour .driver-popover-description {
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.9;
+  color: var(--text-secondary);
+}
+.driver-popover.tt-tour .driver-popover-progress-text {
+  font-family: var(--font-ui);
+  color: var(--gold-deep);
+  font-weight: 700;
+  font-size: 13px;
+}
+.driver-popover.tt-tour .driver-popover-footer { margin-top: 14px; gap: 8px; }
+.driver-popover.tt-tour .driver-popover-navigation-btns { gap: 6px; flex-direction: row-reverse; }
+.driver-popover.tt-tour .driver-popover-footer button {
+  font-family: var(--font-ui);
+  font-size: 14px;
+  text-shadow: none;
+  border: 0;
+  border-radius: 11px;
+  padding: 6px 14px;
+  background: var(--surface-tint-strong);
+  color: var(--text-primary);
+}
+.driver-popover.tt-tour .driver-popover-footer .driver-popover-next-btn {
+  background: var(--text-primary);
+  color: #FFF8E8;
+  font-weight: 700;
+}
+.driver-popover.tt-tour .driver-popover-close-btn {
+  left: 10px;
+  right: auto;
+  color: var(--text-tertiary);
+}
+.driver-popover.tt-tour .driver-popover-arrow { border-color: transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  .glass { transition: none; }
+}
+
+/* ─── عنوان تکراری صفحه‌ها ────────────────────────────
+   پوستهٔ تازه عنوان صفحه را در نوار بالا نشان می‌دهد؛ همهٔ صفحه‌های قدیمی
+   یک <h1 class="text-xl"> هم‌نام بالای خودشان دارند. ردیف دکمه‌هایشان
+   سر جایش می‌ماند، فقط خود عنوان پنهان می‌شود. */
+main h1.text-xl {
+  display: none;
 }

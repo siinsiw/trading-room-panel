@@ -22,3 +22,6 @@ export function formatLafz(n: number): string {
   const sign = n >= 0 ? '+' : '';
   return `${sign}${toFa(n)}`;
 }
+
+/** «۲۱۴٬۷۰۰» — رقم فارسی با جداکنندهٔ هزارگان فارسی */
+export const money = (n: number): string => toFa(Math.round(n).toLocaleString('en-US')).replace(/,/g, '٬');

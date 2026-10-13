@@ -411,7 +411,7 @@ export default function RoomSettings() {
                       style={{
                         ...inputStyle,
                         ...(f.kind === 'int'
-                          ? { fontFamily: "'Geist Mono', monospace", textAlign: 'right' as const }
+                          ? { fontFamily: 'var(--font-num)', textAlign: 'right' as const }
                           : {}),
                       }}
                     />

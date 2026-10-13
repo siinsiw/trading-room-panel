@@ -72,7 +72,7 @@ export function PriceTicker({ value, className }: PriceTickerProps) {
       )}
       style={{
         color: 'var(--text-primary)',
-        fontFamily: "'Geist Mono', 'Menlo', monospace",
+        fontFamily: 'var(--font-num)',
         fontVariantNumeric: 'tabular-nums',
       }}
       onAnimationEnd={() => setFlash('idle')}

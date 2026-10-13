@@ -4,7 +4,6 @@ import { Toaster } from 'sonner';
 import { Providers } from './providers';
 import { routes } from './routes';
 import { boot } from './boot';
-import { CustomCursor } from '@/ui/compounds/CustomCursor';
 import { OfflineBanner } from '@/ui/compounds/OfflineBanner';
 
 const router = createBrowserRouter(routes);
@@ -15,18 +14,23 @@ export default function App() {
   return (
     <Providers>
       <OfflineBanner />
-      <CustomCursor />
       <RouterProvider router={router} />
       <Toaster
-        position="top-left"
+        // پایین، نه بالا: بالا-چپ دقیقاً روی دکمه‌های «راهنما» و پروفایل نوار بالا می‌نشست.
+        // روی موبایل بالای نوار پایین شناور (۶۶ + ۸ پیکسل) قرار می‌گیرد.
+        position="bottom-left"
+        mobileOffset={{ bottom: 86 }}
         dir="rtl"
         richColors
         closeButton
         toastOptions={{
           style: {
-            fontFamily: 'YekanBakh, Vazirmatn, system-ui, sans-serif',
-            backgroundColor: 'var(--bg-elevated)',
-            borderColor: 'var(--border-strong)',
+            fontFamily: 'var(--font-ui)',
+            backgroundColor: 'var(--glass-strong)',
+            backdropFilter: 'var(--glass-blur)',
+            boxShadow: 'var(--glass-shadow)',
+            borderColor: 'transparent',
+            borderRadius: 16,
             color: 'var(--text-primary)',
           },
         }}

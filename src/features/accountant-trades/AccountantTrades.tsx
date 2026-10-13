@@ -61,7 +61,7 @@ function TradeDrawer({ trade, onClose }: TradeDrawerProps) {
               <span className="text-xs shrink-0" style={{ color: 'var(--text-secondary)' }}>{label}</span>
               <span
                 className="text-xs font-medium break-all text-left"
-                style={{ color: 'var(--text-primary)', fontFamily: value.match(/^[0-9]/) ? "'Geist Mono', monospace" : undefined }}
+                style={{ color: 'var(--text-primary)', fontFamily: value.match(/^[0-9]/) ? 'var(--font-num)' : undefined }}
               >
                 {value}
               </span>
@@ -212,19 +212,19 @@ export default function AccountantTrades() {
                     style={{ borderColor: 'var(--border-subtle)' }}
                     onClick={() => setSelectedTrade(t)}
                   >
-                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                       {toFa(t.settlementDate)}
                     </td>
                     <td className="px-4 py-2.5" style={{ color: 'var(--text-secondary)' }}>{t.marketId}</td>
                     <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>{toFa(t.quantity)}</td>
-                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+                    <td className="px-4 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                       {formatTomans(t.priceToman)}
                     </td>
                     <td
                       className="px-4 py-2.5 tabular-nums"
                       style={{
                         color: (t.buyerPnLToman ?? 0) >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)',
-                        fontFamily: "'Geist Mono', monospace",
+                        fontFamily: 'var(--font-num)',
                       }}
                     >
                       {t.buyerPnLToman != null ? ((t.buyerPnLToman >= 0 ? '+' : '') + formatTomans(t.buyerPnLToman)) : '—'}
@@ -233,7 +233,7 @@ export default function AccountantTrades() {
                       className="px-4 py-2.5 tabular-nums"
                       style={{
                         color: (t.sellerPnLToman ?? 0) >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)',
-                        fontFamily: "'Geist Mono', monospace",
+                        fontFamily: 'var(--font-num)',
                       }}
                     >
                       {t.sellerPnLToman != null ? ((t.sellerPnLToman >= 0 ? '+' : '') + formatTomans(t.sellerPnLToman)) : '—'}

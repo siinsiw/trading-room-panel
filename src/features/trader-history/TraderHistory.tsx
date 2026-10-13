@@ -29,7 +29,7 @@ function KpiCard({ label, value, sub, highlight }: KpiCardProps) {
         className="text-lg font-bold tabular-nums"
         style={{
           color: highlight ? 'var(--accent-gold)' : 'var(--text-primary)',
-          fontFamily: "'Geist Mono', monospace",
+          fontFamily: 'var(--font-num)',
         }}
       >
         {value}
@@ -269,7 +269,7 @@ export default function TraderHistory() {
                       className="border-t transition-colors hover:bg-[var(--surface-tint)]"
                       style={{ borderColor: 'var(--border-subtle)' }}
                     >
-                      <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+                      <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                         {toFa(t.settlementDate)}
                       </td>
                       <td className="px-3 py-2.5" style={{ color: 'var(--text-secondary)' }}>
@@ -289,14 +289,14 @@ export default function TraderHistory() {
                       <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>
                         {toFa(t.quantity)}
                       </td>
-                      <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+                      <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                         {formatTomans(t.priceToman)}
                       </td>
                       <td
                         className="px-3 py-2.5 tabular-nums font-semibold"
                         style={{
                           color: pnl >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)',
-                          fontFamily: "'Geist Mono', monospace",
+                          fontFamily: 'var(--font-num)',
                         }}
                       >
                         {pnl >= 0 ? '+' : ''}{formatTomans(pnl)}

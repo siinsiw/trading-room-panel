@@ -73,7 +73,7 @@ export function OrderRow({
         className="relative z-10 flex-1 font-mono font-semibold tabular-nums"
         style={{
           color: priceColor,
-          fontFamily: "'Geist Mono', 'Menlo', monospace",
+          fontFamily: 'var(--font-num)',
           fontVariantNumeric: 'tabular-nums',
         }}
       >

@@ -75,14 +75,14 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
           {rows.map((r) => (
             <tr key={r.trader_id} className="border-t hover:bg-[var(--surface-tint)]" style={{ borderColor: 'var(--border-subtle)' }}>
               <td className="px-3 py-2.5" style={{ color: 'var(--text-primary)' }}>{r.full_name}</td>
-              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                 {formatTether(r.deposit_tether)}
               </td>
               <td
                 className="px-3 py-2.5 tabular-nums font-medium"
                 style={{
                   color: r.floating_pnl_toman >= 0 ? 'var(--semantic-success)' : 'var(--semantic-danger)',
-                  fontFamily: "'Geist Mono', monospace",
+                  fontFamily: 'var(--font-num)',
                 }}
               >
                 {r.floating_pnl_toman >= 0 ? '+' : ''}{formatTomans(r.floating_pnl_toman)}
@@ -98,7 +98,7 @@ function PreviewTable({ rows }: { rows: PreviewRow[] }) {
               </td>
               <td
                 className="px-3 py-2.5 tabular-nums font-semibold"
-                style={{ fontFamily: "'Geist Mono', monospace", color: 'var(--text-primary)' }}
+                style={{ fontFamily: 'var(--font-num)', color: 'var(--text-primary)' }}
               >
                 {toFa(r.percentage.toFixed(1))}٪
               </td>
@@ -348,7 +348,7 @@ export default function SettlementControl() {
               onChange={(e) => setSettlementDate(e.target.value)}
               placeholder="1405/02/11"
               className="w-full rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-              style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+              style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
             />
           </div>
           {selectedMarket && (
@@ -356,7 +356,7 @@ export default function SettlementControl() {
               مزنه:{' '}
               <span
                 className="tabular-nums font-semibold"
-                style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
+                style={{ color: 'var(--accent-gold)', fontFamily: 'var(--font-num)' }}
               >
                 {formatTomans(selectedMarket.mazneCurrent)}
               </span>
@@ -384,7 +384,7 @@ export default function SettlementControl() {
                 value={testPrice}
                 onChange={(e) => setTestPrice(e.target.value)}
                 className="w-36 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
               />
             </div>
             <div>
@@ -394,7 +394,7 @@ export default function SettlementControl() {
                 value={tetherRate}
                 onChange={(e) => setTetherRate(e.target.value)}
                 className="w-28 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
               />
             </div>
             <button
@@ -445,7 +445,7 @@ export default function SettlementControl() {
                     value={rateToman}
                     onChange={(e) => { setRateToman(e.target.value); setPreviewDone(false); }}
                     className="w-36 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                   />
                 </div>
                 <div>
@@ -455,7 +455,7 @@ export default function SettlementControl() {
                     value={rateTether}
                     onChange={(e) => { setRateTether(e.target.value); setPreviewDone(false); }}
                     className="w-28 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                    style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                   />
                 </div>
                 <button
@@ -529,7 +529,7 @@ export default function SettlementControl() {
                 onChange={(e) => setEmergencyRate(e.target.value)}
                 placeholder="185000000"
                 className="w-40 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
               />
             </div>
             <div>
@@ -539,7 +539,7 @@ export default function SettlementControl() {
                 value={emergencyTether}
                 onChange={(e) => setEmergencyTether(e.target.value)}
                 className="w-28 rounded-lg border bg-transparent px-3 py-2 text-sm outline-none"
-                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                style={{ borderColor: 'var(--border-strong)', color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
               />
             </div>
             <div>
@@ -581,7 +581,7 @@ export default function SettlementControl() {
             <p className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>برگشت تصفیه</p>
             <span
               className="tabular-nums text-sm font-bold"
-              style={{ color: 'var(--semantic-warn)', fontFamily: "'Geist Mono', monospace" }}
+              style={{ color: 'var(--semantic-warn)', fontFamily: 'var(--font-num)' }}
             >
               {toFa(`${String(reversalMins).padStart(2, '0')}:${String(reversalSecs).padStart(2, '0')}`)} مانده
             </span>
@@ -657,7 +657,7 @@ export default function SettlementControl() {
                     </td>
                     <td
                       className="px-3 py-2.5 tabular-nums"
-                      style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+                      style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
                     >
                       {formatTomans(s.rateToman)}
                     </td>

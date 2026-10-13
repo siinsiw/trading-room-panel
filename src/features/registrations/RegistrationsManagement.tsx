@@ -267,7 +267,7 @@ function RequestCard({
 
           <div
             className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs tabular-nums"
-            style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}
+            style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}
           >
             {row.phone && <span>📱 {toFa(row.phone)}</span>}
             {/* یوزرنیم لاتین است؛ بدون جداسازی، @ در جریان راست‌به‌چپ

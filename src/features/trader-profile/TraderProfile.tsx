@@ -33,7 +33,7 @@ function StatCard({ label, value, sub }: StatCardProps) {
       style={{ backgroundColor: 'var(--bg-overlay)', borderColor: 'var(--border-subtle)' }}
     >
       <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-tertiary)' }}>{label}</p>
-      <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+      <p className="text-sm font-bold tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
         {value}
       </p>
       {sub && <p className="text-xs mt-0.5" style={{ color: 'var(--text-secondary)' }}>{sub}</p>}
@@ -246,7 +246,7 @@ export default function TraderProfile() {
                         </span>
                       </td>
                       <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>{toFa(t.quantity)}</td>
-                      <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+                      <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                         {formatTomans(t.priceToman)}
                       </td>
                       <td className="px-3 py-2.5" style={{ color: 'var(--text-secondary)' }}>{toFa(t.settlementDate)}</td>

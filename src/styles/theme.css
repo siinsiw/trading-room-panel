@@ -1,154 +1,95 @@
 /* ═══════════════════════════════════════════════════════════════
-   توکن‌های رنگ — دو تم: تیره (پیش‌فرض) و روشن
+   توکن‌های رنگ — فقط تم روشن (۲۰۲۶-۱۰-۱۳، تصمیم کارفرما)
+
+   کاغذ گرم + شیشهٔ مات + طلایی. تم تیره برداشته شد؛ نام متغیرها همان
+   قبلی‌اند تا هیچ صفحه‌ای نشکند.
 
    قاعده: هیچ کامپوننتی رنگ خام ننویسد. هر رنگی که در UI دیده می‌شود
-   باید یکی از این متغیرها باشد، وگرنه در تم دیگر می‌شکند.
+   باید یکی از این متغیرها باشد.
 
-   تفکیک مهم:
-     --accent-gold      رنگ طلایی برای «متن و آیکون» — در تم روشن
-                        تیره‌تر می‌شود تا روی کاغذ خوانا بماند
-     --accent-surface   سطح پرشدهٔ برند (دکمهٔ اصلی) — در هر دو تم
-                        طلایی روشن می‌ماند و متنش تیره است
-     --accent-wash      تینت بسیار ملایم برند برای نوارها و سربرگ‌ها —
-                        متن روی آن همان --text-primary است، نه on-accent
+   تفکیک برند:
+     --accent-gold      طلایی برای «متن و آیکون» — تیره، تا روی کاغذ خوانا بماند
+     --accent-surface   سطح پرشدهٔ برند (دکمهٔ اصلی) — طلایی روشن، متن تیره
+     --accent-wash      تینت بسیار ملایم برند برای نوارها و سربرگ‌ها
    ═══════════════════════════════════════════════════════════════ */
 
-:root,
-[data-theme='dark'] {
-  color-scheme: dark;
-
-  /* سطوح */
-  --bg-base:      #08080C;
-  --bg-elevated:  #13131A;
-  --bg-overlay:   #1C1C26;
-  --border-subtle: #22222C;
-  --border-strong: #2E2E3C;
-
-  /* تینت شفاف روی سطوح — جایگزین bg-white/5 و bg-white/10 */
-  --surface-tint:        rgba(255, 255, 255, 0.05);
-  --surface-tint-strong: rgba(255, 255, 255, 0.10);
-
-  /* متن */
-  --text-primary:   #F5F4EE;
-  --text-secondary: #8B8B95;
-  --text-tertiary:  #767682;
-  /* متنی که روی سطح برند می‌نشیند */
-  --text-on-accent: #0B0A06;
-
-  /* برند */
-  --accent-gold:        #D4A24C;
-  --accent-gold-bright: #F2BD68;
-  --accent-gold-dim:    #6E5226;
-  --accent-surface:     #D4A24C;
-  --accent-wash:        rgba(212, 162, 76, 0.08);
-
-  /* معنایی */
-  --semantic-buy:     #2DD4BF;
-  --semantic-sell:    #FB7185;
-  --semantic-warn:    #FB923C;
-  --semantic-danger:  #EF4444;
-  --semantic-success: #22C55E;
-
-  /* پردهٔ روی عکس پس‌زمینهٔ صفحهٔ ورود */
-  --auth-scrim: rgba(0, 0, 0, 0.55);
-
-  /* پردهٔ پشت مودال و کشو — کارش تیره‌کردن صفحه است، پس در هر دو تم
-     تیره می‌ماند؛ فقط در تم روشن سبک‌تر تا کاغذ زیرش حس شود. */
-  --modal-scrim: rgba(0, 0, 0, 0.70);
-
-  /* سایه — در تم تیره تقریباً نامرئی است، در روشن کار می‌کند */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.55);
-
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-
-  --transition-default: 200ms cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-/* ─── تم روشن ────────────────────────────────────────────────────
-   کاغذ گرم، نه سفید خالص. طلایی برای متن تیره می‌شود (‎#D4A24C روی
-   سفید نسبت کنتراست ۱.۹ دارد و عملاً خوانا نیست). رنگ‌های معنایی هم
-   یک پله تیره‌تر می‌شوند تا روی پس‌زمینهٔ روشن دیده شوند. */
-[data-theme='light'] {
+:root {
   color-scheme: light;
 
-  --bg-base:      #F6F4EF;
-  --bg-elevated:  #FFFFFF;
-  --bg-overlay:   #F2F0E8;
-  --border-subtle: #DCD7C9;
-  --border-strong: #C9C4B6;
+  /* قلم — نازنین برای همه‌چیز، از جمله عددها.
+     ارقام نازنین هم‌عرض‌اند، پس ستون عدد خودبه‌خود تراز می‌ماند. */
+  --font-ui:  'Nazanin', 'Tahoma', serif;
+  --font-num: 'Nazanin', 'Tahoma', serif;
 
-  --surface-tint:        rgba(24, 22, 15, 0.045);
-  --surface-tint-strong: rgba(24, 22, 15, 0.085);
+  /* سطوح */
+  --paper:        #F3F0E9;
+  --bg-base:      #F3F0E9;
+  --bg-elevated:  rgba(255, 254, 250, 0.66);
+  --bg-overlay:   #F4EFE4;
+  --border-subtle: rgba(70, 52, 20, 0.10);
+  --border-strong: rgba(70, 52, 20, 0.18);
 
-  --text-primary:   #17150F;
-  --text-secondary: #5C584C;
-  --text-tertiary:  #78725F;
-  --text-on-accent: #17150F;
+  --surface-tint:        rgba(70, 52, 20, 0.045);
+  --surface-tint-strong: rgba(70, 52, 20, 0.085);
 
+  /* شیشه */
+  --glass:        rgba(255, 254, 250, 0.56);
+  --glass-strong: rgba(255, 254, 250, 0.84);
+  --glass-rim:    rgba(255, 255, 255, 0.72);
+  --glass-blur:   blur(22px) saturate(1.5);
+  --glass-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45),
+    0 1px 1px rgba(80, 58, 16, 0.04),
+    0 10px 24px -10px rgba(80, 58, 16, 0.14),
+    0 30px 60px -30px rgba(80, 58, 16, 0.22);
+  --glass-shadow-hover:
+    inset 0 1px 0 rgba(255, 255, 255, 1),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 2px 2px rgba(80, 58, 16, 0.05),
+    0 16px 32px -12px rgba(80, 58, 16, 0.18),
+    0 40px 80px -36px rgba(80, 58, 16, 0.28);
+
+  /* متن */
+  --text-primary:   #1B1813;
+  --text-secondary: #5B5546;
+  --text-tertiary:  #7D7666;
+  --text-on-accent: #1B1813;
+
+  /* برند */
+  --gold:               #C8962F;
+  --gold-deep:          #8A6114;
+  --gold-soft:          #F1E3C2;
+  --amber:              #E0A43A;
   --accent-gold:        #8A6114;
-  --accent-gold-bright: #A8781F;
+  --accent-gold-bright: #A97A1E;
   --accent-gold-dim:    #E8DCBE;
   --accent-surface:     #E0AE4F;
-  --accent-wash:        rgba(138, 97, 20, 0.055);
+  --accent-wash:        rgba(200, 150, 47, 0.08);
 
-  --semantic-buy:     #0D8B7D;
-  --semantic-sell:    #D6295A;
-  --semantic-warn:    #C2540A;
-  --semantic-danger:  #C62222;
+  /* معنایی */
+  --semantic-buy:     #0E8A7C;
+  --semantic-sell:    #C8325F;
+  --semantic-warn:    #C2620A;
+  --semantic-danger:  #C62D2D;
   --semantic-success: #15803D;
+  --buy-wash:  rgba(14, 138, 124, 0.10);
+  --sell-wash: rgba(200, 50, 95, 0.09);
+  --warn-wash: rgba(194, 98, 10, 0.10);
 
-  --auth-scrim: rgba(246, 244, 239, 0.72);
-  --modal-scrim: rgba(24, 22, 15, 0.42);
+  /* پرده‌ها */
+  --auth-scrim:  rgba(243, 240, 233, 0.70);
+  --modal-scrim: rgba(27, 24, 19, 0.38);
 
-  --shadow-sm: 0 1px 2px rgba(24, 22, 15, 0.06);
-  --shadow-md: 0 4px 16px rgba(24, 22, 15, 0.08);
-  --shadow-lg: 0 12px 40px rgba(24, 22, 15, 0.12);
-}
+  --shadow-sm: 0 1px 2px rgba(80, 58, 16, 0.06);
+  --shadow-md: 0 4px 16px rgba(80, 58, 16, 0.08);
+  --shadow-lg: 0 12px 40px rgba(80, 58, 16, 0.14);
 
-/* اگر کاربر تمی انتخاب نکرده و سیستمش روشن است — تا وقتی
-   data-theme صریحاً ست نشده باشد. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme='dark']):not([data-theme='light']) {
-    color-scheme: light;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 24px;
 
-    --bg-base:      #F6F4EF;
-    --bg-elevated:  #FFFFFF;
-    --bg-overlay:   #F2F0E8;
-    --border-subtle: #DCD7C9;
-    --border-strong: #C9C4B6;
-
-    --surface-tint:        rgba(24, 22, 15, 0.045);
-    --surface-tint-strong: rgba(24, 22, 15, 0.085);
-
-    --text-primary:   #17150F;
-    --text-secondary: #5C584C;
-    --text-tertiary:  #78725F;
-    --text-on-accent: #17150F;
-
-    --accent-gold:        #8A6114;
-    --accent-gold-bright: #A8781F;
-    --accent-gold-dim:    #E8DCBE;
-    --accent-surface:     #E0AE4F;
-  --accent-wash:        rgba(138, 97, 20, 0.055);
-
-    --semantic-buy:     #0D8B7D;
-    --semantic-sell:    #D6295A;
-    --semantic-warn:    #C2540A;
-    --semantic-danger:  #C62222;
-    --semantic-success: #15803D;
-
-    --auth-scrim: rgba(246, 244, 239, 0.72);
-    --modal-scrim: rgba(24, 22, 15, 0.42);
-  --modal-scrim: rgba(24, 22, 15, 0.42);
-
-    --shadow-sm: 0 1px 2px rgba(24, 22, 15, 0.06);
-    --shadow-md: 0 4px 16px rgba(24, 22, 15, 0.08);
-    --shadow-lg: 0 12px 40px rgba(24, 22, 15, 0.12);
-  }
+  --transition-default: 220ms cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* ─── مقیاس z-index ──────────────────────────────────────────────
@@ -159,6 +100,7 @@
      55   پردهٔ شیت پایینی
      60   پنل شیت پایینی
      70   مودال و کشوی صفحه، همراه پرده‌اش
+     80   تور راهنما (driver.js)
     100   بنر آفلاین — همیشه بالای همه
 
    نکتهٔ تاریخی: مودال‌ها z-50 بودند، دقیقاً هم‌ارتفاع نوار پایین، و چون

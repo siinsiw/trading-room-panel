@@ -1,80 +1,50 @@
+import { useRef } from 'react';
 import { Outlet } from 'react-router-dom';
+import { gsap, useGSAP } from '@/lib/gsap';
 import { Logo } from '@/ui/compounds/Logo';
 import { LOGIN_BG_URL } from '@/ui/compounds/brand';
-import { ThemeToggle } from '@/ui/compounds/ThemeToggle';
 
 export function AuthShell() {
+  const root = useRef<HTMLDivElement>(null);
+
+  // لوگو و کارت با یک مکث کوتاه پشت‌سرهم وارد می‌شوند
+  useGSAP(() => {
+    const mm = gsap.matchMedia();
+    mm.add('(prefers-reduced-motion: no-preference)', () => {
+      gsap.timeline({ defaults: { ease: 'power3.out' } })
+        .from('.auth-brand > *', { y: 14, autoAlpha: 0, stagger: 0.08, duration: 0.6 })
+        .from('.auth-card', { y: 24, autoAlpha: 0, duration: 0.7 }, '<0.15');
+    });
+    return () => mm.revert();
+  }, { scope: root });
+
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden px-4"
-      style={{
-        backgroundColor: 'var(--bg-base)',
+      ref={root}
+      className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden px-4"
+      style={LOGIN_BG_URL ? {
         // بدون VITE_LOGIN_BG_URL اصلاً backgroundImage ست نمی‌شود؛
         // `url()` خالی در بعضی مرورگرها یک درخواست بی‌مورد می‌سازد.
-        ...(LOGIN_BG_URL && {
-          backgroundImage: `url(${LOGIN_BG_URL})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }),
-      }}
+        backgroundImage: `url(${LOGIN_BG_URL})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+      } : undefined}
     >
-      {/* تیره‌سازی برای خوانایی فرم روی پس‌زمینه — بدون تصویر لازم نیست */}
+      {/* پردهٔ کاغذی روی تصویر پس‌زمینه — بدون تصویر لازم نیست */}
       {LOGIN_BG_URL && (
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{ backgroundColor: 'var(--auth-scrim)' }}
-        />
+        <div className="pointer-events-none absolute inset-0" style={{ backgroundColor: 'var(--auth-scrim)' }} />
       )}
 
-      {/* نور طلایی روی بالا */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 60% 40% at 50% 0%, color-mix(in srgb, var(--accent-surface) 18%, transparent) 0%, transparent 70%)',
-        }}
-      />
-
-      {/* تغییر تم — گوشهٔ بالا */}
-      <div className="absolute left-4 top-4 z-20">
-        <ThemeToggle />
-      </div>
-
-      {/* لوگو */}
-      <div className="mb-8 text-center z-10">
-        <div
-          className="w-16 h-16 rounded-2xl mx-auto mb-3 overflow-hidden shadow-lg ring-1"
-          style={{
-            backgroundColor: 'var(--bg-elevated)',
-            boxShadow: '0 4px 24px color-mix(in srgb, var(--accent-surface) 25%, transparent)',
-            ['--tw-ring-color' as string]: 'var(--border-strong)',
-          }}
-        >
-          <Logo size={64} />
+      <div className="auth-brand z-10 mb-7 text-center">
+        <div className="mx-auto mb-3 w-fit overflow-hidden rounded-[18px]" style={{ boxShadow: '0 14px 30px -10px rgba(169,118,28,.55)' }}>
+          <Logo size={68} />
         </div>
-        <p
-          className="text-xs tracking-widest uppercase"
-          style={{ color: 'var(--text-secondary)' }}
-        >
-          اتاق معاملات
-        </p>
-        <p
-          className="mt-1 text-sm font-bold"
-          style={{ color: 'var(--accent-gold)' }}
-        >
-          تی‌تی
-        </p>
+        <p className="text-[14px]" style={{ color: 'var(--text-secondary)' }}>اتاق معاملات</p>
+        <p className="text-[22px] font-bold" style={{ color: 'var(--gold-deep)' }}>تی‌تی</p>
       </div>
 
-      {/* کارت فرم */}
-      <div
-        className="w-full max-w-[380px] z-10 rounded-2xl p-8 backdrop-blur-md"
-        style={{
-          backgroundColor: 'color-mix(in srgb, var(--bg-elevated) 85%, transparent)',
-          border: '1px solid var(--border-subtle)',
-        }}
-      >
+      <div className="auth-card glass glass-strong z-10 w-full max-w-[400px] p-8">
         <Outlet />
       </div>
     </div>

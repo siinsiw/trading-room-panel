@@ -34,6 +34,7 @@ const AccountantUsers       = lazy(() => import('@/features/accountant-users/Acc
 
 // Shared (همه‌ی نقش‌ها)
 const MyProfilePage = lazy(() => import('@/features/profile/MyProfilePage'));
+const GuidePage     = lazy(() => import('@/features/guide/GuidePage'));
 
 function Wrap({ children }: { children: React.ReactNode }) {
   return (
@@ -84,6 +85,7 @@ export const routes: RouteObject[] = [
               { path: '/admin/registrations', element: <Wrap><Registrations /></Wrap> },
               { path: '/admin/settings',      element: <Wrap><RoomSettings /></Wrap> },
               { path: '/admin/profile',       element: <Wrap><MyProfilePage /></Wrap> },
+              { path: '/admin/guide',         element: <Wrap><GuidePage /></Wrap> },
             ],
           },
 
@@ -101,6 +103,7 @@ export const routes: RouteObject[] = [
               { path: '/accountant/settlements', element: <Wrap><AccountantSettlements /></Wrap> },
               { path: '/accountant/users',       element: <Wrap><AccountantUsers /></Wrap> },
               { path: '/accountant/profile',     element: <Wrap><MyProfilePage /></Wrap> },
+              { path: '/accountant/guide',       element: <Wrap><GuidePage /></Wrap> },
             ],
           },
         ],

@@ -5,7 +5,7 @@
 // حالا آدرس‌ها از env می‌آیند و اگر تنظیم نشده باشند (یا لود نشوند) یک نشان
 // برداری درون‌خطی جای آرم می‌نشیند — بدون وابستگی به شبکه.
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { LOGO_URL } from './brand';
 
 interface LogoProps {
@@ -15,7 +15,8 @@ interface LogoProps {
 }
 
 function LogoMark({ size, className, alt }: Required<Pick<LogoProps, 'size'>> & LogoProps) {
-  // نشان جایگزین: دو «ت» درهم، با همان طلایی تم
+  // نشان جایگزین: کاشی طلایی با «تی‌تی» سفید — همان کاشی ریل ناوبری
+  const gid = `logo-${useId().replace(/:/g, '')}`;
   return (
     <svg
       width={size}
@@ -26,15 +27,21 @@ function LogoMark({ size, className, alt }: Required<Pick<LogoProps, 'size'>> & 
       className={className}
       style={{ display: 'block' }}
     >
-      <rect x="1" y="1" width="46" height="46" rx="12"
-        fill="none" stroke="var(--accent-gold)" strokeWidth="2" />
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0.6" y2="1">
+          <stop offset="0" stopColor="#E8B95A" />
+          <stop offset="1" stopColor="#A9761C" />
+        </linearGradient>
+      </defs>
+      <rect x="0" y="0" width="48" height="48" rx="14" fill={`url(#${gid})`} />
+      <rect x="0.5" y="0.5" width="47" height="47" rx="13.5" fill="none" stroke="rgba(255,255,255,.45)" />
       <text
-        x="24" y="31"
+        x="24" y="30.5"
         textAnchor="middle"
-        fontSize="19"
+        fontSize="16"
         fontWeight="700"
-        fill="var(--accent-gold)"
-        fontFamily="inherit"
+        fill="#fff"
+        fontFamily="var(--font-ui)"
       >
         تی‌تی
       </text>

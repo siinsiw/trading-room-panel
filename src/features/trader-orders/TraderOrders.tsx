@@ -139,7 +139,7 @@ function OrderTable({ orders, showCancel, onCancel }: OrderTableProps) {
               className="border-t transition-colors hover:bg-[var(--surface-tint)]"
               style={{ borderColor: 'var(--border-subtle)' }}
             >
-              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: "'Geist Mono', monospace" }}>
+              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-num)' }}>
                 {toFa(new Date(o.placedAt).toLocaleString('fa-IR', { timeZone: 'Asia/Tehran', dateStyle: 'short', timeStyle: 'short' }))}
               </td>
               <td className="px-3 py-2.5" style={{ color: 'var(--text-primary)' }}>
@@ -148,10 +148,10 @@ function OrderTable({ orders, showCancel, onCancel }: OrderTableProps) {
               <td className="px-3 py-2.5">
                 <SideBadge side={o.side} />
               </td>
-              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                 {o.lafz >= 0 ? '+' : ''}{toFa(o.lafz)}
               </td>
-              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}>
+              <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}>
                 {formatTomans(o.priceToman)}
               </td>
               <td className="px-3 py-2.5 tabular-nums" style={{ color: 'var(--text-primary)' }}>

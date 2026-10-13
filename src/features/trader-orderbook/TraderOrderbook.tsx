@@ -101,7 +101,7 @@ function DepthRow({ level, side, maxQty, isBest }: DepthRowProps) {
       {/* Content */}
       <span
         className="relative tabular-nums font-medium"
-        style={{ color, fontFamily: "'Geist Mono', monospace" }}
+        style={{ color, fontFamily: 'var(--font-num)' }}
       >
         {formatTomans(level.price)}
       </span>
@@ -127,7 +127,7 @@ function RecentTradeRow({ trade, isNew }: RecentTradeRowProps) {
     >
       <span
         className="tabular-nums"
-        style={{ color: 'var(--text-primary)', fontFamily: "'Geist Mono', monospace" }}
+        style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-num)' }}
       >
         {formatTomans(trade.priceToman)}
       </span>
@@ -339,7 +339,7 @@ export default function TraderOrderbook() {
             مزنه:{' '}
             <span
               className="tabular-nums font-semibold"
-              style={{ color: 'var(--accent-gold)', fontFamily: "'Geist Mono', monospace" }}
+              style={{ color: 'var(--accent-gold)', fontFamily: 'var(--font-num)' }}
             >
               {formatTomans(selectedMarket.mazneCurrent)}
             </span>
@@ -495,7 +495,7 @@ export default function TraderOrderbook() {
                   style={{
                     borderColor: 'var(--border-strong)',
                     color: 'var(--text-primary)',
-                    fontFamily: "'Geist Mono', monospace",
+                    fontFamily: 'var(--font-num)',
                   }}
                 />
               </div>
@@ -514,7 +514,7 @@ export default function TraderOrderbook() {
                   style={{
                     borderColor: 'var(--border-strong)',
                     color: 'var(--text-primary)',
-                    fontFamily: "'Geist Mono', monospace",
+                    fontFamily: 'var(--font-num)',
                   }}
                 />
               </div>
@@ -528,7 +528,7 @@ export default function TraderOrderbook() {
                   className="tabular-nums font-semibold"
                   style={{
                     color: 'var(--accent-gold)',
-                    fontFamily: "'Geist Mono', monospace",
+                    fontFamily: 'var(--font-num)',
                   }}
                 >
                   {formatTomans(finalPrice)}
