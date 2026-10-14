@@ -238,3 +238,7 @@ table td {
 main h1.text-xl {
   display: none;
 }
+
+/* پرِ خودکار مرورگر — FloatField با onAnimationStart می‌فهمد فیلد پر شده */
+@keyframes tt-autofill { from { opacity: 1; } to { opacity: 1; } }
+input:-webkit-autofill { animation: tt-autofill 1ms; }

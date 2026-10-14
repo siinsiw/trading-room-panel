@@ -19,18 +19,35 @@ export function AuthShell() {
           .from('.auth-brand > *', { y: 14, autoAlpha: 0, stagger: 0.08, duration: 0.6 }, 0.35)
           .from('.auth-card', { y: 24, autoAlpha: 0, duration: 0.7 }, '<0.15');
 
-        // روی دسکتاپ پس‌زمینه چند پیکسل با موس جابه‌جا می‌شود — عمق، نه نمایش
+        // روی دسکتاپ: پس‌زمینه خلاف جهت موس چند پیکسل می‌رود و کارت حداکثر
+        // ~۲٫۵ درجه کج می‌شود — ورق شیشه‌ای که کمی از روی حکاکی بلند شده
         if (!ctx.conditions?.fine) return;
         const bg = root.current?.querySelector<HTMLElement>('.auth-bg');
-        if (!bg) return;
+        const card = root.current?.querySelector<HTMLElement>('.auth-card');
+        const foil = root.current?.querySelector<HTMLElement>('.auth-sheen');
+        if (!bg || !card || !foil) return;
+        gsap.set(card, { transformPerspective: 1200 });
         const xTo = gsap.quickTo(bg, 'x', { duration: 1.2, ease: 'power3' });
         const yTo = gsap.quickTo(bg, 'y', { duration: 1.2, ease: 'power3' });
+        const rx = gsap.quickTo(card, 'rotationX', { duration: 0.8, ease: 'power3' });
+        const ry = gsap.quickTo(card, 'rotationY', { duration: 0.8, ease: 'power3' });
         const move = (e: PointerEvent) => {
-          xTo((e.clientX / window.innerWidth - 0.5) * -14);
-          yTo((e.clientY / window.innerHeight - 0.5) * -10);
+          const nx = e.clientX / window.innerWidth - 0.5, ny = e.clientY / window.innerHeight - 0.5;
+          xTo(nx * -14);
+          yTo(ny * -10);
+          ry(nx * 5);
+          rx(-ny * 4);
+        };
+        // برق فویل: با ورود موس یک بار رد می‌شود، نه بیشتر از هر ۲٫۵ ثانیه
+        let lastSheen = 0;
+        const sheen = () => {
+          if (Date.now() - lastSheen < 2500) return;
+          lastSheen = Date.now();
+          gsap.fromTo(foil, { xPercent: -140 }, { xPercent: 330, duration: 1.1, ease: 'power2.inOut' });
         };
         window.addEventListener('pointermove', move);
-        return () => window.removeEventListener('pointermove', move);
+        card.addEventListener('pointerenter', sheen);
+        return () => { window.removeEventListener('pointermove', move); card.removeEventListener('pointerenter', sheen); };
       },
     );
     return () => mm.revert();
@@ -59,6 +76,17 @@ export function AuthShell() {
       </div>
 
       <div className="auth-card glass glass-strong z-10 w-full max-w-[400px] p-8">
+        {/* برق فویل اسکناس — لایهٔ بریده‌شده با گوشه‌های کارت */}
+        <span aria-hidden className="pointer-events-none absolute inset-0 z-[5] overflow-hidden rounded-[inherit]">
+          <span
+            className="auth-sheen absolute -inset-y-[20%] left-0 w-[45%]"
+            style={{
+              background: 'linear-gradient(105deg, transparent 0%, rgba(255,236,190,0) 30%, rgba(255,236,190,.55) 50%, rgba(255,236,190,0) 70%, transparent 100%)',
+              mixBlendMode: 'soft-light',
+              transform: 'translateX(-140%) skewX(-12deg)',
+            }}
+          />
+        </span>
         <Outlet />
       </div>
     </div>
